@@ -33,12 +33,12 @@ It can also compare the imputation against some ground truth (high-coverage samp
 2. Run joint imputation with STITCH on high and low coverage cram files ([`STITCH`](`https://doi.org/10.1038/ng.3594`))
 3. Compare imputation results to ground truth variants ([`scikit-allel`](`https://scikit-allel.readthedocs.io/en/stable/`) and [`anndata`](`https://anndata.readthedocs.io/en/latest/`); _optional_)
 4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](`https://ggplot2.tidyverse.org/`)):
-5. Info score
-6. Pearson $r$
-7. Pearson $r^2$
-8. Coefficient of determination ($R^2$)
-9. Root Mean Square Error (RMSE)
-10. Mean Absolute Error (MAE)
+  1. Info score
+  2. Pearson $r$
+  3. Pearson $r^2$
+  4. Coefficient of determination ($R^2$)
+  5. Root Mean Square Error (RMSE)
+  6. Mean Absolute Error (MAE)
 
 ## Usage
 
@@ -84,7 +84,10 @@ nextflow run birneylab/stitchimpute \
 
 ## Pipeline output
 
+<!--
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/stitchimpute/results) tab on the nf-core website pipeline page.
+-->
+
 For more details about the output files and reports, please refer to the
 [output documentation](https://nf-co.re/stitchimpute/output).
 
