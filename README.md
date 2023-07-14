@@ -5,10 +5,12 @@
 
 [![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/stitchimpute/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 -->
+
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
+
 <!-- [![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/nf-core/stitchimpute)
 > [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23stitchimpute-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/stitchimpute)[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 -->
@@ -27,19 +29,16 @@ It can also compare the imputation against some ground truth (high-coverage samp
 **nf-core/stitchimpute** is a bioinformatics pipeline that ...
 -->
 
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
-
-1. Downsample high-coverage cram files ([`samtools`](`http://www.htslib.org/doc/samtools.html`); *optional*)
+1. Downsample high-coverage cram files ([`samtools`](`http://www.htslib.org/doc/samtools.html`); _optional_)
 2. Run joint imputation with STITCH on high and low coverage cram files ([`STITCH`](`https://doi.org/10.1038/ng.3594`))
-3. Compare imputation results to ground truth variants ([`scikit-allel`](`https://scikit-allel.readthedocs.io/en/stable/`) and [`anndata`](`https://anndata.readthedocs.io/en/latest/`); *optional*)
+3. Compare imputation results to ground truth variants ([`scikit-allel`](`https://scikit-allel.readthedocs.io/en/stable/`) and [`anndata`](`https://anndata.readthedocs.io/en/latest/`); _optional_)
 4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](`https://ggplot2.tidyverse.org/`)):
-  1. Info score
-  2. Pearson $r$
-  3. Pearson $r^2$
-  4. Coefficient of determination ($R^2$)
-  5. Root Mean Square Error (RMSE)
-  6. Mean Absolute Error (MAE)
-
+5. Info score
+6. Pearson $r$
+7. Pearson $r^2$
+8. Coefficient of determination ($R^2$)
+9. Root Mean Square Error (RMSE)
+10. Mean Absolute Error (MAE)
 
 ## Usage
 
@@ -81,7 +80,7 @@ nextflow run birneylab/stitchimpute \
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
 > TODO: add docs
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/stitchimpute/usage) and the [parameter documentation](https://nf-co.re/stitchimpute/parameters).
+> For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/stitchimpute/usage) and the [parameter documentation](https://nf-co.re/stitchimpute/parameters).
 
 ## Pipeline output
 
@@ -91,18 +90,21 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-> nf-core/stitchimpute was originally written by Saul Pierotti.
-birneylab/stitchimpute was originally written by Saul Pierotti.
+<!--
+nf-core/stitchimpute was originally written by Saul Pierotti.
+-->
 
+> birneylab/stitchimpute was originally written by Saul Pierotti.
+
+<!--
 > We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-> For further information or help, don't hesitate to get in touch on the [Slack `#stitchimpute` channel](https://nfcore.slack.com/channels/stitchimpute) (you can join with [this invite](https://nf-co.re/join/slack)).
+For further information or help, don't hesitate to get in touch on the [Slack `#stitchimpute` channel](https://nfcore.slack.com/channels/stitchimpute) (you can join with [this invite](https://nf-co.re/join/slack)).
+-->
 
 ## Citations
 
