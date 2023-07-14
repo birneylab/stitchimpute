@@ -1,6 +1,10 @@
+# birneylab/stitchimpute pull request
+
 <!--
 # nf-core/stitchimpute pull request
+-->
 
+<!--
 Many thanks for contributing to nf-core/stitchimpute!
 
 Please fill in the appropriate checklist below (delete whatever is not relevant).
@@ -11,6 +15,7 @@ Remember that PRs should be made against the dev branch, unless you're preparing
 Learn more about contributing: [CONTRIBUTING.md](https://github.com/nf-core/stitchimpute/tree/master/.github/CONTRIBUTING.md)
 -->
 
+<!--
 ## PR checklist
 
 - [ ] This comment contains a description of changes (with reason).
@@ -23,3 +28,4 @@ Learn more about contributing: [CONTRIBUTING.md](https://github.com/nf-core/stit
 - [ ] Output Documentation in `docs/output.md` is updated.
 - [ ] `CHANGELOG.md` is updated.
 - [ ] `README.md` is updated (including new tool citations and authors/contributors).
+- -->

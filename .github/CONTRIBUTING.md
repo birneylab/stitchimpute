@@ -1,3 +1,6 @@
+# birneylab/stitchimpute: Contributing Guidelines
+
+<!--
 # nf-core/stitchimpute: Contributing Guidelines
 
 Hi there!
@@ -116,3 +119,4 @@ To get started:
 Devcontainer specs:
 
 - [DevContainer config](.devcontainer/devcontainer.json)
+- -->

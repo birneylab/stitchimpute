@@ -1,5 +1,6 @@
 name: Feature request
-description: Suggest an idea for the nf-core/stitchimpute pipeline
+#description: Suggest an idea for the nf-core/stitchimpute pipeline
+description: Suggest an idea for the birneylab/stitchimpute pipeline
 labels: enhancement
 body:
   - type: textarea
