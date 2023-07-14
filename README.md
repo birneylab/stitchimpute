@@ -1,4 +1,4 @@
-# ![birneylab/stitchimpute](docs/images/nf-core-stitchimpute_logo_light.png#gh-light-mode-only) ![birneylab/stitchimpute](docs/images/nf-core-stitchimpute_logo_dark.png#gh-dark-mode-only)
+# ![birneylab/stitchimpute](docs/images/birneylab-stitchimpute_name_light.png#gh-light-mode-only) ![birneylab/stitchimpute](docs/images/birneylab-stitchimpute_name_dark.png#gh-dark-mode-only)
 
 <!--
 # ![nf-core/stitchimpute](docs/images/nf-core-stitchimpute_logo_light.png#gh-light-mode-only) ![nf-core/stitchimpute](docs/images/nf-core-stitchimpute_logo_dark.png#gh-dark-mode-only)
