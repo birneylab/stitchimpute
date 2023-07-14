@@ -29,10 +29,10 @@ It can also compare the imputation against some ground truth (high-coverage samp
 **nf-core/stitchimpute** is a bioinformatics pipeline that ...
 -->
 
-1. Downsample high-coverage cram files ([`samtools`](`http://www.htslib.org/doc/samtools.html`); _optional_)
-2. Run joint imputation with STITCH on high and low coverage cram files ([`STITCH`](`https://doi.org/10.1038/ng.3594`))
-3. Compare imputation results to ground truth variants ([`scikit-allel`](`https://scikit-allel.readthedocs.io/en/stable/`) and [`anndata`](`https://anndata.readthedocs.io/en/latest/`); _optional_)
-4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](`https://ggplot2.tidyverse.org/`)):
+1. Downsample high-coverage cram files ([`samtools`](http://www.htslib.org/doc/samtools.html); _optional_)
+2. Run joint imputation with STITCH on high and low coverage cram files ([STITCH](https://doi.org/10.1038/ng.3594))
+3. Compare imputation results to ground truth variants ([`scikit-allel`](https://scikit-allel.readthedocs.io/en/stable/) and [`anndata`](https://anndata.readthedocs.io/en/latest/); _optional_)
+4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](https://ggplot2.tidyverse.org/)):
    - Info score
    - Pearson $r$
    - Pearson $r^2$
