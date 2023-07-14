@@ -33,12 +33,12 @@ It can also compare the imputation against some ground truth (high-coverage samp
 2. Run joint imputation with STITCH on high and low coverage cram files ([`STITCH`](`https://doi.org/10.1038/ng.3594`))
 3. Compare imputation results to ground truth variants ([`scikit-allel`](`https://scikit-allel.readthedocs.io/en/stable/`) and [`anndata`](`https://anndata.readthedocs.io/en/latest/`); *optional*)
 4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](`https://ggplot2.tidyverse.org/`))
-  - Info score
-  - Pearson $r$
-  - Pearson $r^2$
-  - Coefficient of determination ($R^2$)
-  - Root Mean Square Error (RMSE)
-  - Mean Absolute Error (MAE)
+  1. Info score
+  2. Pearson $r$
+  3. Pearson $r^2$
+  4. Coefficient of determination ($R^2$)
+  5. Root Mean Square Error (RMSE)
+  6. Mean Absolute Error (MAE)
 
 
 ## Usage
