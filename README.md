@@ -30,7 +30,7 @@ It can also compare the imputation against some ground truth (high-coverage samp
 -->
 
 1. Downsample high-coverage cram files ([`samtools`](http://www.htslib.org/doc/samtools.html); _optional_)
-2. Run joint imputation with STITCH on high and low coverage cram files ([STITCH](https://doi.org/10.1038/ng.3594))
+2. Run joint imputation with STITCH on high and low coverage cram files ([`STITCH`](https://doi.org/10.1038/ng.3594))
 3. Compare imputation results to ground truth variants ([`scikit-allel`](https://scikit-allel.readthedocs.io/en/stable/) and [`anndata`](https://anndata.readthedocs.io/en/latest/); _optional_)
 4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](https://ggplot2.tidyverse.org/)):
    - Info score
@@ -47,25 +47,18 @@ It can also compare the imputation against some ground truth (high-coverage samp
 > to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
 > with `-profile test` before running the workflow on actual data.
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
 First, prepare a samplesheet with your input data that looks as follows:
 
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+sample,cram,crai
+AAAJM5YHV_CPool_BeW18_21s005266-1-1_Welz_lane1BeW18A10,/path/to/AAAJM5YHV_CPool_BeW18_21s005266-1-1_Welz_lane1BeW18A10.md.cram,/path/to/AAAJM5YHV_CPool_BeW18_21s005266-1-1_Welz_lane1BeW18A10.md.cram.crai
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
+Each row represents a sample with its associated cram file and crai file.
 
 Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
 ```bash
 nextflow run birneylab/stitchimpute \
