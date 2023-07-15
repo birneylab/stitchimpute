@@ -1,2 +1,2 @@
 sample,cram,crai
-test_sample,test_sample.cram,test_sample.cram.crai
+test_sample,${projectDir}/tests/cram/test_sample_olatipes_15:18000000-18001000.cram,${projectDir}/tests/cram/test_sample_olatipes_15:18000000-18001000.cram.crai
