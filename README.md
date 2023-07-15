@@ -72,7 +72,7 @@ nextflow run birneylab/stitchimpute \
 > provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-> For more details and further functionality, please refer to the [usage documentation](docs/usage) and the [parameter documentation](docs/parameters).
+> For more details and further functionality, please refer to the [usage documentation](docs/usage.md) and the [parameter documentation](docs/parameters.md).
 
 <!--
 > TODO: add docs
