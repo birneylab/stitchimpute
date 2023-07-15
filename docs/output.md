@@ -1,4 +1,8 @@
+# birneylab/stitchimpute: Output
+
+<!--
 # nf-core/stitchimpute: Output
+-->
 
 ## Introduction
 
