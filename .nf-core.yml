@@ -1,6 +1,7 @@
 repository_type: pipeline
 lint:
   files_unchanged:
+    - docs/README.md
     - .github/CONTRIBUTING.md
     - .github/ISSUE_TEMPLATE/bug_report.yml
     - .github/ISSUE_TEMPLATE/config.yml
@@ -10,4 +11,6 @@ lint:
   nextflow_config:
     - manifest.name
     - manifest.homePage
+  merge_markers:
+    - tests/cram/test_sample_olatipes_15:18000000-18001000.cram
 
