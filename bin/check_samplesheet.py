@@ -236,6 +236,7 @@ def check_samplesheet(file_in, file_out):
             SAMPLE,SAMPLE.cram,SAMPLE.cram.crai
     """
     required_columns = {"sample", "cram", "crai"}
+    optional_columns = {"high_cov"}
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on
     # `newline=""`.
     with file_in.open(newline="") as in_handle:
@@ -259,7 +260,7 @@ def check_samplesheet(file_in, file_out):
                 logger.critical(f"{str(error)} on line {i + 2}.")
                 sys.exit(1)
         checker.validate_unique_samples()
-    header = list(reader.fieldnames)
+    header = list(required_columns | optional_columns)
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on
     # `newline=""`.
     with file_out.open(mode="w", newline="") as out_handle:
