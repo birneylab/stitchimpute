@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/stitchimpute",
-    "homePage": "https://github.com/nf-core/stitchimpute",
+    "name": "birneylab/stitchimpute",
+    "homePage": "https://github.com/birneylab/stitchimpute",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
