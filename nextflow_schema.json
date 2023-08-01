@@ -42,6 +42,19 @@
                 }
             }
         },
+        "stitch_options": {
+            "title": "Stitch options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "stitch_posfile": {
+                    "type": "string",
+                    "help_text": "Where to find file with positions to run. File is tab seperated with no header, one row per SNP, with col 1 = chromosome, col 2 = physical position (sorted from smallest to largest), col 3 = reference base, col 4 = alternate base. Bases are capitalized. Example first row: 1<tab>1000<tab>A<tab>G<tab>"
+                }
+            },
+            "required": ["stitch_posfile"]
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -63,17 +76,6 @@
                     "description": "Path to FASTA genome file.",
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
                     "fa_icon": "far fa-file-code"
-                },
-                "fasta_fai": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA reference index.",
-                    "help_text": "Currently ignored, the reference index is generated automatically.",
-                    "fa_icon": "fas fa-file",
-                    "hidden": true
                 },
                 "igenomes_base": {
                     "type": "string",
@@ -186,14 +188,12 @@
                     "type": "boolean",
                     "description": "Display help text.",
                     "fa_icon": "fas fa-question-circle",
-                    "default": false,
                     "hidden": true
                 },
                 "version": {
                     "type": "boolean",
                     "description": "Display version and exit.",
                     "fa_icon": "fas fa-question-circle",
-                    "default": false,
                     "hidden": true
                 },
                 "publish_dir_mode": {
@@ -217,7 +217,6 @@
                     "type": "boolean",
                     "description": "Send plain-text email instead of HTML.",
                     "fa_icon": "fas fa-remove-format",
-                    "default": false,
                     "hidden": true
                 },
                 "max_multiqc_email_size": {
@@ -232,7 +231,6 @@
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
-                    "default": false,
                     "hidden": true
                 },
                 "hook_url": {
@@ -271,7 +269,6 @@
                     "type": "boolean",
                     "fa_icon": "far fa-eye-slash",
                     "description": "Show all params when using `--help`",
-                    "default": false,
                     "hidden": true,
                     "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
                 },
@@ -279,7 +276,6 @@
                     "type": "boolean",
                     "fa_icon": "far fa-check-circle",
                     "description": "Validation of parameters fails when an unrecognised parameter is found.",
-                    "default": false,
                     "hidden": true,
                     "help_text": "By default, when an unrecognised parameter is found, it returns a warinig."
                 },
@@ -287,7 +283,6 @@
                     "type": "boolean",
                     "fa_icon": "far fa-check-circle",
                     "description": "Validation of parameters in lenient more.",
-                    "default": false,
                     "hidden": true,
                     "help_text": "Allows string values that are parseable as numbers or booleans. For further information see [JSONSchema docs](https://github.com/everit-org/json-schema#lenient-mode)."
                 }
@@ -297,6 +292,9 @@
     "allOf": [
         {
             "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/stitch_options"
         },
         {
             "$ref": "#/definitions/reference_genome_options"
@@ -310,5 +308,157 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "stitch_K": {
+            "type": "string"
+        },
+        "stitch_S": {
+            "type": "string"
+        },
+        "stitch_nGen": {
+            "type": "string"
+        },
+        "stitch_method": {
+            "type": "string"
+        },
+        "stitch_downsampleToCov": {
+            "type": "string"
+        },
+        "stitch_downsampleFraction": {
+            "type": "string"
+        },
+        "stitch_readAware": {
+            "type": "string"
+        },
+        "stitch_maxDifferenceBetweenReads": {
+            "type": "string"
+        },
+        "stitch_maxEmissionMatrixDifference": {
+            "type": "string"
+        },
+        "stitch_alphaMatThreshold": {
+            "type": "string"
+        },
+        "stitch_emissionThreshold": {
+            "type": "string"
+        },
+        "stitch_iSizeUpperLimit": {
+            "type": "string"
+        },
+        "stitch_bqFilter": {
+            "type": "string"
+        },
+        "stitch_niterations": {
+            "type": "string"
+        },
+        "stitch_shuffleHaplotypeIterations": {
+            "type": "string"
+        },
+        "stitch_splitReadIterations": {
+            "type": "string"
+        },
+        "stitch_nCores": {
+            "type": "string"
+        },
+        "stitch_expRate": {
+            "type": "string"
+        },
+        "stitch_maxRate": {
+            "type": "string"
+        },
+        "stitch_minRate": {
+            "type": "string"
+        },
+        "stitch_Jmax": {
+            "type": "string"
+        },
+        "stitch_switchModelIteration": {
+            "type": "string"
+        },
+        "stitch_restartIterations": {
+            "type": "string"
+        },
+        "stitch_refillIterations": {
+            "type": "string"
+        },
+        "stitch_downsampleSamples": {
+            "type": "string"
+        },
+        "stitch_downsampleSamplesKeepList": {
+            "type": "string"
+        },
+        "stitch_useSoftClippedBases": {
+            "type": "string"
+        },
+        "stitch_outputBlockSize": {
+            "type": "string"
+        },
+        "stitch_outputSNPBlockSize": {
+            "type": "string"
+        },
+        "stitch_inputBundleBlockSize": {
+            "type": "string"
+        },
+        "stitch_genetic_map_file": {
+            "type": "string"
+        },
+        "stitch_reference_haplotype_file": {
+            "type": "string"
+        },
+        "stitch_reference_legend_file": {
+            "type": "string"
+        },
+        "stitch_reference_sample_file": {
+            "type": "string"
+        },
+        "stitch_reference_populations": {
+            "type": "string"
+        },
+        "stitch_reference_phred": {
+            "type": "string"
+        },
+        "stitch_reference_iterations": {
+            "type": "string"
+        },
+        "stitch_reference_shuffleHaplotypeIterations": {
+            "type": "string"
+        },
+        "stitch_initial_min_hapProb": {
+            "type": "string"
+        },
+        "stitch_initial_max_hapProb": {
+            "type": "string"
+        },
+        "stitch_plotHapSumDuringIterations": {
+            "type": "string"
+        },
+        "stitch_plot_shuffle_haplotype_attempts": {
+            "type": "string"
+        },
+        "stitch_plotAfterImputation": {
+            "type": "string"
+        },
+        "stitch_save_sampleReadsInfo": {
+            "type": "string"
+        },
+        "stitch_gridWindowSize": {
+            "type": "string"
+        },
+        "stitch_shuffle_bin_nSNPs": {
+            "type": "string"
+        },
+        "stitch_shuffle_bin_radius": {
+            "type": "string"
+        },
+        "stitch_keepSampleReadsInRAM": {
+            "type": "string"
+        },
+        "stitch_use_bx_tag": {
+            "type": "string"
+        },
+        "stitch_bxTagUpperLimit": {
+            "type": "string"
+        }
+    }
 }

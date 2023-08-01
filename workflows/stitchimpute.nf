@@ -18,7 +18,9 @@ WorkflowStitchimpute.initialise(params, log)
 
 // Check input path parameters to see if they exist
 def checkPathParamList = [
-    params.fasta
+    params.input,
+    params.fasta,
+    params.stitch_posfile
 ]
 
 /*
@@ -28,8 +30,8 @@ def checkPathParamList = [
 */
 for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 
-fasta     = params.fasta     ? Channel.fromPath(params.fasta)     : Channel.empty()
-fasta_fai = params.fasta_fai ? Channel.fromPath(params.fasta_fai) : Channel.of()
+fasta          = params.fasta          ? Channel.fromPath(params.fasta)          : Channel.empty()
+stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile) : Channel.empty()
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,6 +44,7 @@ fasta_fai = params.fasta_fai ? Channel.fromPath(params.fasta_fai) : Channel.of()
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { PREPROCESSING } from '../subworkflows/local/preprocessing'
+include { IMPUTATION } from '../subworkflows/local/imputation'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,10 +70,19 @@ workflow STITCHIMPUTE {
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     INPUT_CHECK ( file(params.input) )
+
     PREPROCESSING (
         INPUT_CHECK.out.reads,
+        fasta
+    )
+    PREPROCESSING.out.fasta_fai.set { fasta_fai }
+
+    IMPUTATION(
+        reads,
+        stitch_cramlist,
         fasta,
-        fasta_fai
+        fasta_fai,
+        chromosome_names
     )
 
     versions.mix ( INPUT_CHECK.out.versions ).set { versions }
