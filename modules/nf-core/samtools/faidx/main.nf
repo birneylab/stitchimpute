@@ -1,6 +1,6 @@
-process SAMTOOLS_INDEX {
-    tag "$meta.id"
-    label 'process_low'
+process SAMTOOLS_FAIDX {
+    tag "$fasta"
+    label 'process_single'
 
     conda "bioconda::samtools=1.17"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,13 +8,14 @@ process SAMTOOLS_INDEX {
         'biocontainers/samtools:1.17--h00cdaf9_0' }"
 
     input:
-    tuple val(meta), path(input)
+    tuple val(meta), path(fasta)
+    tuple val(meta2), path(fai)
 
     output:
-    tuple val(meta), path("*.bai") , optional:true, emit: bai
-    tuple val(meta), path("*.csi") , optional:true, emit: csi
-    tuple val(meta), path("*.crai"), optional:true, emit: crai
-    path  "versions.yml"           , emit: versions
+    tuple val(meta), path ("*.{fa,fasta}") , emit: fa , optional: true
+    tuple val(meta), path ("*.fai")        , emit: fai, optional: true
+    tuple val(meta), path ("*.gzi")        , emit: gzi, optional: true
+    path "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,10 +24,9 @@ process SAMTOOLS_INDEX {
     def args = task.ext.args ?: ''
     """
     samtools \\
-        index \\
-        -@ ${task.cpus-1} \\
-        $args \\
-        $input
+        faidx \\
+        $fasta \\
+        $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -35,12 +35,14 @@ process SAMTOOLS_INDEX {
     """
 
     stub:
+    def match = (task.ext.args =~ /-o(?:utput)?\s(.*)\s?/).findAll()
+    def fastacmd = match[0] ? "touch ${match[0][1]}" : ''
     """
-    touch ${input}.bai
-    touch ${input}.crai
-    touch ${input}.csi
+    ${fastacmd}
+    touch ${fasta}.fai
 
     cat <<-END_VERSIONS > versions.yml
+
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
     END_VERSIONS

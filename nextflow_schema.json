@@ -64,6 +64,17 @@
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
                     "fa_icon": "far fa-file-code"
                 },
+                "fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to FASTA reference index.",
+                    "help_text": "Currently ignored, the reference index is generated automatically.",
+                    "fa_icon": "fas fa-file",
+                    "hidden": true
+                },
                 "igenomes_base": {
                     "type": "string",
                     "format": "directory-path",
