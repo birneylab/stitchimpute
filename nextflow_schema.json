@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/stitchimpute/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/birneylab/stitchimpute/master/nextflow_schema.json",
     "title": "birneylab/stitchimpute pipeline parameters",
     "description": "A pipeline for imputing genotypes using STITCH, evaluating imputation performance against a ground truth, optimising imputation parameters, and refining the SNP set used",
     "type": "object",
