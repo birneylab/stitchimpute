@@ -10,10 +10,10 @@ process STITCH_GENERATE_INPUT {
     input:
     tuple(
         val(meta),
-        path(posfile),
-        path(cramlist),
         path(cram_files),
         path(crai_files),
+        path(posfile),
+        path(cramlist),
         path(fasta),
         path(fasta_fai)
     )
@@ -32,7 +32,7 @@ process STITCH_GENERATE_INPUT {
 
     STITCH::STITCH(
         tempdir=".",
-        chr="${chr}",
+        chr="${meta.chromosome_name}",
         posfile="${posfile}",
         cramlist="${cramlist}",
         reference="${fasta}",

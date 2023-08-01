@@ -70,19 +70,20 @@ workflow STITCHIMPUTE {
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     INPUT_CHECK ( file(params.input) )
+    INPUT_CHECK.out.reads.set { reads }
 
-    PREPROCESSING (
-        INPUT_CHECK.out.reads,
-        fasta
-    )
+    PREPROCESSING ( reads, fasta )
+    PREPROCESSING.out.stitch_cramlist.set { stitch_cramlist }
     PREPROCESSING.out.fasta_fai.set { fasta_fai }
+    PREPROCESSING.out.chromosome_names.set { chromosome_names }
 
     IMPUTATION(
+        chromosome_names,
         reads,
+        stitch_posfile,
         stitch_cramlist,
         fasta,
-        fasta_fai,
-        chromosome_names
+        fasta_fai
     )
 
     versions.mix ( INPUT_CHECK.out.versions ).set { versions }
