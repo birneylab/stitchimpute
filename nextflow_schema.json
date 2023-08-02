@@ -22,6 +22,13 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://github.com/birneylab/stitchimpute/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "mode": {
+                    "type": "string",
+                    "default": "imputation",
+                    "fa_icon": "fas fa-hand-pointer",
+                    "description": "Which branch of the pipeline to run",
+                    "enum": ["imputation", "grid_search", "positions_refinement"]
+                },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
@@ -50,10 +57,31 @@
             "properties": {
                 "stitch_posfile": {
                     "type": "string",
-                    "help_text": "Where to find file with positions to run. File is tab seperated with no header, one row per SNP, with col 1 = chromosome, col 2 = physical position (sorted from smallest to largest), col 3 = reference base, col 4 = alternate base. Bases are capitalized. Example first row: 1<tab>1000<tab>A<tab>G<tab>"
+                    "help_text": "Where to find file with positions to run. File is tab seperated with no header, one row per SNP, with col 1 = chromosome, col 2 = physical position (sorted from smallest to largest), col 3 = reference base, col 4 = alternate base. Bases are capitalized. Example first row: 1<tab>1000<tab>A<tab>G<tab>",
+                    "format": "file-path",
+                    "mimetype": "text/tab-separated-values",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "stitch_K": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-hand-point-up",
+                    "help_text": "See STITCH documentation for more details. Required for imputation mode."
+                },
+                "stitch_nGen": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-hand-pointer",
+                    "help_text": "See STITCH documentation for more details. Required for imputation mode."
+                },
+                "stitch_grid_search": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file-csv",
+                    "help_text": "Required for grid_search mode. Column names must be K and nGen.",
+                    "format": "file-path",
+                    "mimetype": "text/csv"
                 }
             },
-            "required": ["stitch_posfile"]
+            "required": ["stitch_posfile"],
+            "fa_icon": "fas fa-dna"
         },
         "reference_genome_options": {
             "title": "Reference genome options",
@@ -308,157 +336,5 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ],
-    "properties": {
-        "stitch_K": {
-            "type": "string"
-        },
-        "stitch_S": {
-            "type": "string"
-        },
-        "stitch_nGen": {
-            "type": "string"
-        },
-        "stitch_method": {
-            "type": "string"
-        },
-        "stitch_downsampleToCov": {
-            "type": "string"
-        },
-        "stitch_downsampleFraction": {
-            "type": "string"
-        },
-        "stitch_readAware": {
-            "type": "string"
-        },
-        "stitch_maxDifferenceBetweenReads": {
-            "type": "string"
-        },
-        "stitch_maxEmissionMatrixDifference": {
-            "type": "string"
-        },
-        "stitch_alphaMatThreshold": {
-            "type": "string"
-        },
-        "stitch_emissionThreshold": {
-            "type": "string"
-        },
-        "stitch_iSizeUpperLimit": {
-            "type": "string"
-        },
-        "stitch_bqFilter": {
-            "type": "string"
-        },
-        "stitch_niterations": {
-            "type": "string"
-        },
-        "stitch_shuffleHaplotypeIterations": {
-            "type": "string"
-        },
-        "stitch_splitReadIterations": {
-            "type": "string"
-        },
-        "stitch_nCores": {
-            "type": "string"
-        },
-        "stitch_expRate": {
-            "type": "string"
-        },
-        "stitch_maxRate": {
-            "type": "string"
-        },
-        "stitch_minRate": {
-            "type": "string"
-        },
-        "stitch_Jmax": {
-            "type": "string"
-        },
-        "stitch_switchModelIteration": {
-            "type": "string"
-        },
-        "stitch_restartIterations": {
-            "type": "string"
-        },
-        "stitch_refillIterations": {
-            "type": "string"
-        },
-        "stitch_downsampleSamples": {
-            "type": "string"
-        },
-        "stitch_downsampleSamplesKeepList": {
-            "type": "string"
-        },
-        "stitch_useSoftClippedBases": {
-            "type": "string"
-        },
-        "stitch_outputBlockSize": {
-            "type": "string"
-        },
-        "stitch_outputSNPBlockSize": {
-            "type": "string"
-        },
-        "stitch_inputBundleBlockSize": {
-            "type": "string"
-        },
-        "stitch_genetic_map_file": {
-            "type": "string"
-        },
-        "stitch_reference_haplotype_file": {
-            "type": "string"
-        },
-        "stitch_reference_legend_file": {
-            "type": "string"
-        },
-        "stitch_reference_sample_file": {
-            "type": "string"
-        },
-        "stitch_reference_populations": {
-            "type": "string"
-        },
-        "stitch_reference_phred": {
-            "type": "string"
-        },
-        "stitch_reference_iterations": {
-            "type": "string"
-        },
-        "stitch_reference_shuffleHaplotypeIterations": {
-            "type": "string"
-        },
-        "stitch_initial_min_hapProb": {
-            "type": "string"
-        },
-        "stitch_initial_max_hapProb": {
-            "type": "string"
-        },
-        "stitch_plotHapSumDuringIterations": {
-            "type": "string"
-        },
-        "stitch_plot_shuffle_haplotype_attempts": {
-            "type": "string"
-        },
-        "stitch_plotAfterImputation": {
-            "type": "string"
-        },
-        "stitch_save_sampleReadsInfo": {
-            "type": "string"
-        },
-        "stitch_gridWindowSize": {
-            "type": "string"
-        },
-        "stitch_shuffle_bin_nSNPs": {
-            "type": "string"
-        },
-        "stitch_shuffle_bin_radius": {
-            "type": "string"
-        },
-        "stitch_keepSampleReadsInRAM": {
-            "type": "string"
-        },
-        "stitch_use_bx_tag": {
-            "type": "string"
-        },
-        "stitch_bxTagUpperLimit": {
-            "type": "string"
-        }
-    }
+    ]
 }

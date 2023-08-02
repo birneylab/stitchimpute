@@ -3,7 +3,9 @@
 //
 
 include { STITCH_GENERATEINPUTS } from '../../modules/local/stitch/generateinputs'
-include { STITCH_IMPUTATION } from '../../modules/local/stitch/imputation'
+include { STITCH_IMPUTATION     } from '../../modules/local/stitch/imputation'
+include { BCFTOOLS_INDEX        } from '../../modules/nf-core/bcftools/index/main'
+include { BCFTOOLS_MERGE        } from '../../modules/nf-core/bcftools/merge/main'
 
 workflow IMPUTATION {
     take:
@@ -17,8 +19,6 @@ workflow IMPUTATION {
     main:
     versions = Channel.empty()
 
-    Channel.of( ["K": 2, "nGen": 1] ).set { stitch_args }
-
     reads.groupTuple ().map{
         metas, crams, crais -> [[], crams, crais]
     }
@@ -27,7 +27,12 @@ workflow IMPUTATION {
 
     stitch_posfile.combine ( chromosome_names )
     .map {
-        posfile, chromosome_name -> [["id": chromosome_name], posfile, chromosome_name]
+        posfile, chromosome_name ->
+        [
+            ["id": chromosome_name, "chromosome_name": chromosome_name],
+            posfile,
+            chromosome_name
+        ]
     }
     .set { positions }
 
@@ -41,12 +46,53 @@ workflow IMPUTATION {
         reference
     )
 
-    STITCH_GENERATEINPUTS.out.stitch_input.combine ( stitch_args ).set { stitch_input }
+    Channel.value ( params.stitch_K ).set{ stitch_K }
+    Channel.value ( params.stitch_nGen ).set{ stitch_nGen }
+
+    STITCH_GENERATEINPUTS.out.stitch_input
+    .combine ( stitch_K )
+    .combine ( stitch_nGen )
+    .set { stitch_input }
     STITCH_IMPUTATION( stitch_input )
+
+    STITCH_IMPUTATION.out.vcf
+    .map { meta,vcf -> vcf }
+    .collect ()
+    .map { [["id": "stitch_joined_output"], it] }
+    .branch { // BCFTOOLS_MERGE fails with a single file
+        multiple: it[1].size() >  1
+        single  : it[1].size() == 1
+    }
+    .set { stitch_vcf_collected }
+
+    BCFTOOLS_INDEX ( stitch_vcf_collected.multiple )
+    BCFTOOLS_INDEX.out.csi
+    .map { meta,csi -> csi }
+    .collect ()
+    .map { [["id": "stitch_joined_output"], it] }
+    .set { stitch_vcf_index_collected }
+
+    BCFTOOLS_MERGE(
+        stitch_vcf_collected.multiple.join ( stitch_vcf_index_collected ),
+        fasta.map { [["id": null], it] },
+        [["id": null], []],
+        []
+    )
+
+    stitch_vcf_collected
+    .set { single_vcf_output }
+
+    BCFTOOLS_MERGE.out.merged_variants
+    .concat ( single_vcf_output )
+    .set { vcf }
 
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ) .set { versions }
     versions.mix ( STITCH_IMPUTATION.out.versions ) .set { versions }
+    versions.mix ( BCFTOOLS_INDEX.out.versions ) .set { versions }
+    versions.mix ( BCFTOOLS_MERGE.out.versions ) .set { versions }
 
     emit:
-    versions // channel: [ versions.yml ]
+    versions   // channel: [ versions.yml   ]
+    vcf        // channel: [ meta, vcf_file ]
+
 }

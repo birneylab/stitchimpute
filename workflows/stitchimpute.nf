@@ -72,11 +72,17 @@ workflow STITCHIMPUTE {
     INPUT_CHECK ( file(params.input) )
     INPUT_CHECK.out.reads.set { reads }
 
+    //
+    // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
+    //
     PREPROCESSING ( reads, fasta )
     PREPROCESSING.out.stitch_cramlist.set { stitch_cramlist }
     PREPROCESSING.out.fasta_fai.set { fasta_fai }
     PREPROCESSING.out.chromosome_names.set { chromosome_names }
 
+    //
+    // SUBWORKFLOW: run the imputation
+    //
     IMPUTATION(
         chromosome_names,
         reads,
@@ -86,6 +92,9 @@ workflow STITCHIMPUTE {
         fasta_fai
     )
 
+    //
+    // Collate and dump software versions
+    //
     versions.mix ( INPUT_CHECK.out.versions ).set { versions }
     versions.mix ( PREPROCESSING.out.versions ).set { versions }
     versions.mix ( IMPUTATION.out.versions ).set { versions }

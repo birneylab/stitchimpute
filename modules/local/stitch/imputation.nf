@@ -8,7 +8,7 @@ process STITCH_IMPUTATION {
         'biocontainers/r-stitch:1.6.8--r42h37595e4_0' }"
 
     input:
-    tuple val(meta), path(posfile), path(input), path(RData), val(chromosome_name), val(stitch_args)
+    tuple val(meta), path(posfile), path(input), path(RData), val(chromosome_name), val(K), val(nGen)
 
     output:
     tuple val(meta), path("*.vcf.gz")          , emit: vcf
@@ -20,44 +20,33 @@ process STITCH_IMPUTATION {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ? stitch_args + task.ext.args : stitch_args // should be a map of param: value
-    def args_str = args ? args.collect { /$it.key=$it.value/ }.join (",") : ""
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def out_vcf = "${chromosome_name}.vcf.gz"
-    def last_comma = args_str ? "," : ""
+    def prefix  = task.ext.prefix ?: "${meta.id}"
+    def args    = task.ext.args   ?: ""
+    def out_vcf = "${prefix}.vcf.gz"
+
+    params.mode == "imputation"
     """
-    #!/usr/bin/env Rscript
+    STITCH.R \\
+        --chr ${chromosome_name} \\
+        --posfile ${posfile} \\
+        --output_filename ${out_vcf} \\
+        --K ${K} \\
+        --nGen ${nGen} \\
+        --outputdir . \\
+        --nCores ${task.cpus} \\
+        --regenerateInput FALSE \\
+        --originalRegionName ${chromosome_name} \\
+        ${args}
 
-    library("STITCH")
-
-    stitch_ver <- utils::packageVersion("STITCH")
-
-    STITCH(
-        tempdir=".",
-        outputdir=".",
-        posfile="${posfile}",
-        chr="${chromosome_name}",
-        output_filename="${out_vcf}",
-        nCores=${task.cpus},
-        regenerateInput = FALSE,
-        regenerateInputWithDefaultValues = TRUE,
-        originalRegionName = "${chromosome_name}"${last_comma}
-        ${args_str}
-    )
-
-    system(
-        paste(
-            "cat <<-END_VERSIONS > versions.yml",
-            "\\"${task.process}\\":",
-            sprintf("    stitch: %s", stitch_ver),
-            "END_VERSIONS",
-            sep = "\n"
-        )
-    )
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")"))
+    END_VERSIONS
     """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def args   = task.ext.args   ?: ""
     """
     touch ${out_vcf}
     mkdir plots
