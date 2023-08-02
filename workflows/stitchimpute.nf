@@ -88,6 +88,7 @@ workflow STITCHIMPUTE {
 
     versions.mix ( INPUT_CHECK.out.versions ).set { versions }
     versions.mix ( PREPROCESSING.out.versions ).set { versions }
+    versions.mix ( IMPUTATION.out.versions ).set { versions }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         versions.unique().collectFile(name: 'collated_versions.yml')
