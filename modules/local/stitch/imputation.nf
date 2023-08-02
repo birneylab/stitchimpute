@@ -28,7 +28,7 @@ process STITCH_IMPUTATION {
     """
     STITCH.R \\
         --chr ${chromosome_name} \\
-        --posfile ${posfile} \\
+        --posfile <(grep "^${chromosome_name}\\t" ${posfile}) \\
         --output_filename ${out_vcf} \\
         --K ${K} \\
         --nGen ${nGen} \\

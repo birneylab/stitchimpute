@@ -30,8 +30,8 @@ def checkPathParamList = [
 */
 for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 
-fasta          = params.fasta          ? Channel.fromPath(params.fasta)          : Channel.empty()
-stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile) : Channel.empty()
+fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
+stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,16 +92,16 @@ workflow STITCHIMPUTE {
         fasta_fai
     )
 
-    //
-    // Collate and dump software versions
-    //
-    versions.mix ( INPUT_CHECK.out.versions ).set { versions }
-    versions.mix ( PREPROCESSING.out.versions ).set { versions }
-    versions.mix ( IMPUTATION.out.versions ).set { versions }
+    ////
+    //// Collate and dump software versions
+    ////
+    //versions.mix ( INPUT_CHECK.out.versions ).set { versions }
+    //versions.mix ( PREPROCESSING.out.versions ).set { versions }
+    //versions.mix ( IMPUTATION.out.versions ).set { versions }
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        versions.unique().collectFile(name: 'collated_versions.yml')
-    )
+    //CUSTOM_DUMPSOFTWAREVERSIONS (
+    //    versions.unique().collectFile(name: 'collated_versions.yml')
+    //)
 }
 
 /*

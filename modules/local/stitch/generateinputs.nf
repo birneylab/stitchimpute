@@ -25,7 +25,7 @@ process STITCH_GENERATEINPUTS {
     """
     STITCH.R \\
         --chr $chromosome_name \\
-        --posfile $posfile \\
+        --posfile <(grep "^${chromosome_name}\\t" ${posfile}) \\
         --cramlist $cramlist \\
         --reference $fasta \\
         --outputdir . \\

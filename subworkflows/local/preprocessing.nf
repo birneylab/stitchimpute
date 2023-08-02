@@ -7,8 +7,8 @@ include { SAMTOOLS_FAIDX } from '../../modules/nf-core/samtools/faidx'
 
 workflow PREPROCESSING {
     take:
-    reads     // channel: [mandatory] tuples: [meta, cram, crai]
-    fasta     // channel: [mandatory] file:   reference genome
+    reads          // channel: [mandatory] tuples: [meta, cram, crai]
+    fasta          // channel: [mandatory] file:   reference genome
 
     main:
     fasta.map{ fasta -> [ [ id:fasta.baseName ], fasta ] }.set { fasta }
