@@ -51,6 +51,22 @@ switch (params.mode) {
             log.warn("The parameter \"stitch_grid_search\" is set to but will not be used in the imputation workflow. Set the \"mode\" parameter to \"grid_search\" if you want to perform a parameter search.")
         }
         break
+
+    case "grid_search":
+        if (params.stitch_K) {
+            log.warn("The parameter stitch_K is set but will not be used in the \"grid_search\" workflow.")
+        }
+        if (params.stitch_nGen) {
+            log.warn("The parameter stitch_nGen is set but will not be used in the \"grid_search\" workflow.")
+        }
+        if (!params.stitch_grid_search) {
+            error("No value was provided for the parameter \"stitch_grid_search\", which is required for the grid_search workflow.")
+        }
+        break
+
+    case "snp_set_refinement":
+        break
+
 }
 
 /*
@@ -119,6 +135,13 @@ workflow STITCHIMPUTE {
             versions.mix ( IMPUTATION.out.versions ).set { versions }
 
             break
+
+        case "grid_search":
+            break
+
+        case "snp_set_refinement":
+            break
+
     }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
