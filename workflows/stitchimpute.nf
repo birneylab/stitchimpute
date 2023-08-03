@@ -137,9 +137,15 @@ workflow STITCHIMPUTE {
             break
 
         case "grid_search":
+
+            error("Branch not yet implemented")
+
             break
 
         case "snp_set_refinement":
+
+            error("Branch not yet implemented")
+
             break
 
     }
