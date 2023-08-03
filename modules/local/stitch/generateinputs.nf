@@ -13,8 +13,8 @@ process STITCH_GENERATEINPUTS {
     tuple val(meta3), path(fasta), path(fasta_fai)
 
     output:
-    tuple val(meta), path("${posfile}"), path("input", type: "dir"), path("RData", type: "dir"), val(chromosome_name), emit: stitch_input
-    path "versions.yml"                                                                                              , emit: versions
+    tuple val(meta), path("input", type: "dir"), path("RData", type: "dir"), emit: stitch_input
+    path "versions.yml"                                                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,7 +25,7 @@ process STITCH_GENERATEINPUTS {
     """
     STITCH.R \\
         --chr $chromosome_name \\
-        --posfile <(grep "^${chromosome_name}\\t" ${posfile}) \\
+        --posfile ${posfile} \\
         --cramlist $cramlist \\
         --reference $fasta \\
         --outputdir . \\

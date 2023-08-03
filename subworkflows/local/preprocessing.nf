@@ -17,7 +17,7 @@ workflow PREPROCESSING {
 
     fasta.map { fasta -> [ [ id:fasta.baseName ], fasta ] }.set { fasta }
     SAMTOOLS_FAIDX ( fasta, [['id':null], []] )
-    fasta.join ( SAMTOOLS_FAIDX.out.fai ).set { reference }
+    fasta.join ( SAMTOOLS_FAIDX.out.fai ).collect ().set { reference }
 
     reference
     .map{ meta, fasta, fasta_fai -> fasta_fai }

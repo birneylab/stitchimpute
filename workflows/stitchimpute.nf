@@ -18,7 +18,7 @@ WorkflowStitchimpute.initialise(params, log)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Check mandatory parameters
+    Check mandatory file parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
@@ -33,6 +33,25 @@ for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
 stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Check conditionally mandatory parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+switch (params.mode) {
+    case "imputation":
+        if (!params.stitch_K) {
+            error("No value was provided for the parameter stitch_K, which is required for the imputation workflow.")
+        }
+        if (!params.stitch_nGen) {
+            error("No value was provided for the parameter stitch_nGen, which is required for the imputation workflow.")
+        }
+        if (params.stitch_grid_search) {
+            log.warn("The parameter \"stitch_grid_search\" is set to but will not be used in the imputation workflow. Set the \"mode\" parameter to \"grid_search\" if you want to perform a parameter search.")
+        }
+        break
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,27 +101,29 @@ workflow STITCHIMPUTE {
     PREPROCESSING.out.reference        .set { reference         }
     PREPROCESSING.out.positions        .set { positions         }
 
-    ////
-    //// SUBWORKFLOW: run the imputation
-    ////
-    //IMPUTATION(
-    //    reads,
-    //    positions,
-    //    stitch_cramlist,
-    //    fasta,
-    //    fasta_fai
-    //)
+    //
+    // Collate and dump software versions
+    //
+    versions.mix ( INPUT_CHECK.out.versions ).set { versions }
+    versions.mix ( PREPROCESSING.out.versions ).set { versions }
 
-    ////
-    //// Collate and dump software versions
-    ////
-    //versions.mix ( INPUT_CHECK.out.versions ).set { versions }
-    //versions.mix ( PREPROCESSING.out.versions ).set { versions }
-    //versions.mix ( IMPUTATION.out.versions ).set { versions }
 
-    //CUSTOM_DUMPSOFTWAREVERSIONS (
-    //    versions.unique().collectFile(name: 'collated_versions.yml')
-    //)
+    switch (params.mode) {
+        case "imputation":
+
+            //
+            // SUBWORKFLOW: run the imputation
+            //
+
+            IMPUTATION (positions, collected_samples, reference)
+            versions.mix ( IMPUTATION.out.versions ).set { versions }
+
+            break
+    }
+
+    CUSTOM_DUMPSOFTWAREVERSIONS (
+        versions.unique().collectFile(name: 'collated_versions.yml')
+    )
 }
 
 /*

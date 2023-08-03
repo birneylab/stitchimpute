@@ -70,12 +70,14 @@
                 "stitch_K": {
                     "type": "integer",
                     "fa_icon": "fas fa-hand-point-up",
-                    "help_text": "See STITCH documentation for more details. Required for imputation mode."
+                    "help_text": "See STITCH documentation for more details. Required for imputation mode.",
+                    "minimum": 1
                 },
                 "stitch_nGen": {
                     "type": "integer",
                     "fa_icon": "fas fa-hand-pointer",
-                    "help_text": "See STITCH documentation for more details. Required for imputation mode."
+                    "help_text": "See STITCH documentation for more details. Required for imputation mode.",
+                    "minimum": 1
                 },
                 "stitch_grid_search": {
                     "type": "string",
