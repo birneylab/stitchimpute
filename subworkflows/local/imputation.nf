@@ -60,14 +60,20 @@ workflow IMPUTATION {
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX ( stitch_vcf )
 
-    stitch_vcf.view()
+    stitch_vcf
+    .join( BCFTOOLS_INDEX.out.csi )
+    .map { meta, vcf, csi -> [[id: "joint_stitch_output"], vcf, csi] }
+    .groupTuple ()
+    .set { collected_vcfs }
 
-    //BCFTOOLS_MERGE(
-    //    stitch_vcf.collect(),
-    //    fasta.map { [["id": null], it] },
-    //    [["id": null], []],
-    //    []
-    //)
+    BCFTOOLS_MERGE(
+        collected_vcfs,
+        fasta.map { [["id": null], it] },
+        [["id": null], []],
+        []
+    )
+
+    BCFTOOLS_MERGE.out.merged_variants.view()
 
     //BCFTOOLS_INDEX.out.csi
     //.map { meta,csi -> csi }
