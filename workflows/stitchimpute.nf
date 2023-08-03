@@ -16,22 +16,23 @@ log.info logo + paramsSummaryLog(workflow) + citation
 // Validate input parameters
 WorkflowStitchimpute.initialise(params, log)
 
-// Check input path parameters to see if they exist
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Check mandatory parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
 def checkPathParamList = [
     params.input,
     params.fasta,
     params.stitch_posfile
 ]
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Check mandatory parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
 for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 
 fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
 stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,22 +76,22 @@ workflow STITCHIMPUTE {
     //
     // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
     //
-    PREPROCESSING ( reads, fasta )
-    PREPROCESSING.out.stitch_cramlist.set { stitch_cramlist }
-    PREPROCESSING.out.fasta_fai.set { fasta_fai }
-    PREPROCESSING.out.chromosome_names.set { chromosome_names }
+    PREPROCESSING ( reads, fasta, stitch_posfile )
 
-    //
-    // SUBWORKFLOW: run the imputation
-    //
-    IMPUTATION(
-        chromosome_names,
-        reads,
-        stitch_posfile,
-        stitch_cramlist,
-        fasta,
-        fasta_fai
-    )
+    PREPROCESSING.out.collected_samples.set { collected_samples }
+    PREPROCESSING.out.reference        .set { reference         }
+    PREPROCESSING.out.positions        .set { positions         }
+
+    ////
+    //// SUBWORKFLOW: run the imputation
+    ////
+    //IMPUTATION(
+    //    reads,
+    //    positions,
+    //    stitch_cramlist,
+    //    fasta,
+    //    fasta_fai
+    //)
 
     ////
     //// Collate and dump software versions

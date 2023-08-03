@@ -5,14 +5,14 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
-                    "bcftools/index": {
+                    "bcftools/concat": {
                         "branch": "master",
                         "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
                         "installed_by": ["modules"]
                     },
-                    "bcftools/merge": {
+                    "bcftools/index": {
                         "branch": "master",
-                        "git_sha": "f7219b428dc69f93aa19f219fb7ce8eae8720400",
+                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
                         "installed_by": ["modules"]
                     },
                     "custom/dumpsoftwareversions": {

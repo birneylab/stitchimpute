@@ -5,75 +5,49 @@
 include { STITCH_GENERATEINPUTS } from '../../modules/local/stitch/generateinputs'
 include { STITCH_IMPUTATION     } from '../../modules/local/stitch/imputation'
 include { BCFTOOLS_INDEX        } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_MERGE        } from '../../modules/nf-core/bcftools/merge/main'
+include { BCFTOOLS_CONCAT       } from '../../modules/nf-core/bcftools/concat/main'
 
 workflow IMPUTATION {
     take:
-    chromosome_names    // channel  : name of chromosomes to run STITCH over
-    reads               // tuple    : [meta, cram, crai]
-    stitch_posfile      // file     : positions to run the STITCH over
-    stitch_cramlist     // file     : basenames of cram files, one per line
-    fasta               // file     : reference genome
-    fasta_fai           // file     : index for reference genome
+    positions         // channel [mandatory]: [meta, positions, chromosome_name]
+    collected_samples // channel [mandatory]: [meta, collected_crams, collected_crais, stitch_cramlist]
+    reference         // channel [mandatory]: [meta, fasta, fasta_fai]
 
     main:
     versions = Channel.empty()
 
-    reads
-    .map { meta, cram, crai -> [["id": "collected_samples"], cram, crai] }
-    .groupTuple ()
-    .combine ( stitch_cramlist )
-    .collect () // needed to make it broadcastable
-    .set { collected_samples }
+    //fasta.combine( fasta_fai )
+    //.map { fasta, fasta_fai -> [[], fasta, fasta_fai] }
+    //.collect () // needed to make it broadcastable
+    //.set { reference }
 
-    stitch_posfile.combine ( chromosome_names )
-    .map {
-        posfile, chromosome_name ->
-        [
-            ["id": chromosome_name, "chromosome_name": chromosome_name],
-            posfile,
-            chromosome_name
-        ]
-    }
-    .set { positions }
+    //STITCH_GENERATEINPUTS (
+    //    positions,
+    //    collected_samples,
+    //    reference
+    //)
 
-    fasta.combine( fasta_fai )
-    .map { fasta, fasta_fai -> [[], fasta, fasta_fai] }
-    .collect () // needed to make it broadcastable
-    .set { reference }
+    //Channel.value ( params.stitch_K ).set{ stitch_K }
+    //Channel.value ( params.stitch_nGen ).set{ stitch_nGen }
 
-    STITCH_GENERATEINPUTS (
-        positions,
-        collected_samples,
-        reference
-    )
+    //STITCH_GENERATEINPUTS.out.stitch_input
+    //.combine ( stitch_K )
+    //.combine ( stitch_nGen )
+    //.set { stitch_input }
+    //STITCH_IMPUTATION( stitch_input )
 
-    Channel.value ( params.stitch_K ).set{ stitch_K }
-    Channel.value ( params.stitch_nGen ).set{ stitch_nGen }
+    //STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
+    //BCFTOOLS_INDEX ( stitch_vcf )
 
-    STITCH_GENERATEINPUTS.out.stitch_input
-    .combine ( stitch_K )
-    .combine ( stitch_nGen )
-    .set { stitch_input }
-    STITCH_IMPUTATION( stitch_input )
+    //stitch_vcf
+    //.join( BCFTOOLS_INDEX.out.csi )
+    //.map { meta, vcf, csi -> [[id: "joint_stitch_output"], vcf, csi] }
+    //.groupTuple ()
+    //.set { collected_vcfs }
 
-    STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
-    BCFTOOLS_INDEX ( stitch_vcf )
+    //BCFTOOLS_CONCAT ( collected_vcfs )
 
-    stitch_vcf
-    .join( BCFTOOLS_INDEX.out.csi )
-    .map { meta, vcf, csi -> [[id: "joint_stitch_output"], vcf, csi] }
-    .groupTuple ()
-    .set { collected_vcfs }
-
-    BCFTOOLS_MERGE(
-        collected_vcfs,
-        fasta.map { [["id": null], it] },
-        [["id": null], []],
-        []
-    )
-
-    BCFTOOLS_MERGE.out.merged_variants.view()
+    //BCFTOOLS_CONCAT.out.vcf.view()
 
     //BCFTOOLS_INDEX.out.csi
     //.map { meta,csi -> csi }
