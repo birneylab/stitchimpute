@@ -71,6 +71,14 @@ switch (params.mode) {
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Initialise optional parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -78,9 +86,10 @@ switch (params.mode) {
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { INPUT_CHECK   } from '../subworkflows/local/input_check'
 include { PREPROCESSING } from '../subworkflows/local/preprocessing'
-include { IMPUTATION } from '../subworkflows/local/imputation'
+include { IMPUTATION    } from '../subworkflows/local/imputation'
+include { GRID_SEARCH   } from '../subworkflows/local/grid_search'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +120,7 @@ workflow STITCHIMPUTE {
     //
     // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
     //
-    PREPROCESSING ( reads, fasta, stitch_posfile )
+    PREPROCESSING ( reads, fasta, stitch_posfile, skip_chr )
 
     PREPROCESSING.out.collected_samples.set { collected_samples }
     PREPROCESSING.out.reference        .set { reference         }
@@ -120,7 +129,7 @@ workflow STITCHIMPUTE {
     //
     // Collate and dump software versions
     //
-    versions.mix ( INPUT_CHECK.out.versions ).set { versions }
+    versions.mix ( INPUT_CHECK.out.versions   ).set { versions }
     versions.mix ( PREPROCESSING.out.versions ).set { versions }
 
 
@@ -131,14 +140,15 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: run the imputation
             //
 
-            IMPUTATION (positions, collected_samples, reference)
+            IMPUTATION ( positions, collected_samples, reference )
             versions.mix ( IMPUTATION.out.versions ).set { versions }
 
             break
 
         case "grid_search":
 
-            error("Branch not yet implemented")
+            GRID_SEARCH  ( positions, collected_samples, reference )
+            //versions.mix ( GRID_SEARCH.out.versions ).set { versions }
 
             break
 

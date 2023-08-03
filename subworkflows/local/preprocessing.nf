@@ -11,6 +11,7 @@ workflow PREPROCESSING {
     reads     // channel: [mandatory] tuples: [meta, cram, crai]
     fasta     // channel: [mandatory] file:   reference_genome_fasta
     positions // channel: [mandatory] file:   positions_tsv
+    skip_chr  // list   : [optional]  names of chromosome to skip
 
     main:
     versions = Channel.empty()
@@ -23,7 +24,7 @@ workflow PREPROCESSING {
     .map{ meta, fasta, fasta_fai -> fasta_fai }
     .splitCsv ( sep:"\t" )
     .map { name, length, offset, linebases, linewidth -> name }
-    .filter { name -> ! params.skip_chr.split (",").contains ( name ) }
+    .filter { name -> ! skip_chr.contains ( name ) }
     .set { chromosome_names }
 
     positions

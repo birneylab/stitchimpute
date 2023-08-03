@@ -29,7 +29,10 @@ workflow IMPUTATION {
     .map {
         meta, positions, chromosome_name, input, rdata, K, nGen ->
         [
-            ["id": "chromosome_${chromosome_name}"],
+            [
+                "id"                   : "chromosome_${chromosome_name}",
+                "publish_dir_subfolder": ""                             ,
+            ],
             positions, input, rdata, chromosome_name, K, nGen
         ]
     }
@@ -41,7 +44,7 @@ workflow IMPUTATION {
 
     stitch_vcf
     .join( BCFTOOLS_INDEX_STITCH.out.csi )
-    .map { meta, vcf, csi -> [[id: "joint_stitch_output"], vcf, csi] }
+    .map { meta, vcf, csi -> [["id": "joint_stitch_output"], vcf, csi] }
     .groupTuple ()
     .set { collected_vcfs }
 
