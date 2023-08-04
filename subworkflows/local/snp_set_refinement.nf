@@ -2,108 +2,97 @@
 // Refine the set of positions via iterative filtering
 //
 
+include { INPUT_CHECK                             } from '../../subworkflows/local/input_check'
+include { PREPROCESSING                           } from '../../subworkflows/local/preprocessing'
 include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
 include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
 
-workflow RECURSIVE_ROUTINE {
-    take:
-    positions
-    collected_samples
-    reference
-    filter_value_list
-    iteration
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Initialise mandatory parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
-    main:
+fasta             = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
+stitch_posfile    = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
 
-    print(filter_value_list)
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Initialise optional parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
-    emit:
+skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Recursion specific parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
+if (params.mode == "snp_set_refinement") {
+    filter_value_list = read_filter_values( params.snp_filtering_criteria )
 }
 
-workflow SNP_SET_REFINEMENT {
+
+workflow RECURSIVE_ROUTINE {
     take:
-    positions         // channel [mandatory]: [meta, positions, chromosome_name]
-    collected_samples // channel [mandatory]: [meta, collected_crams, collected_crais, stitch_cramlist]
-    reference         // channel [mandatory]: [meta, fasta, fasta_fai]
+    itervar
 
     main:
-    versions = Channel.empty()
+    itervar.map {
+        meta, positions_list ->
+        new_meta = meta.clone()
+        new_meta.filter_value = filter_value_list[new_meta.iteration - 1]
+        [new_meta, positions_list]
+    }
+    .set { itervar }
 
-    def float filter_value_list = read_filter_values( params.snp_filtering_criteria )
-    def int   iteration         = 1
+    //
+    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    //
+    INPUT_CHECK ( file(params.input) )
+    INPUT_CHECK.out.reads.set { reads }
 
-    RECURSIVE_ROUTINE(
-        positions,
-        collected_samples,
-        reference,
-        filter_value_list,
-        iteration,
-    )
+    //
+    // SUBWORKFLOW: index reference genomoe and prepare STITCH inputs
+    //
+    PREPROCESSING ( reads, fasta, itervar, skip_chr )
+
+    //PREPROCESSING.out.collected_samples.set { collected_samples }
+    //PREPROCESSING.out.reference        .set { reference         }
+    //PREPROCESSING.out.positions        .set { positions         }
 
     //STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
 
-    //Channel.fromPath ( params.stitch_grid_search )
-    //.splitCsv( header:true )
-    //.set { stitch_grid_search_params }
+    //itervar.map{ meta, positions_list -> [meta.iteration, meta.filter_value] }.view()
 
-    //positions.join ( STITCH_GENERATEINPUTS.out.stitch_input )
-    //.combine ( stitch_grid_search_params )
-    //.map {
-    //    meta, positions, chromosome_name, input, rdata, stitch_grid_search_params ->
-    //    [
-    //        [
-    //            "id"                   : "chromosome_${chromosome_name}"                                          ,
-    //            "publish_dir_subfolder": "K_${stitch_grid_search_params.K}_nGen_${stitch_grid_search_params.nGen}",
-    //            "params_comb"          : stitch_grid_search_params                                                ,
-    //        ],
-    //        positions,
-    //        input,
-    //        rdata,
-    //        chromosome_name,
-    //        stitch_grid_search_params.K,
-    //        stitch_grid_search_params.nGen,
-    //    ]
-    //}
-    //.set { stitch_input }
+    itervar.map {
+        meta, positions_list ->
+        new_meta = meta.clone()
+        new_meta.iteration += 1
+        [new_meta, positions_list]
+    }
+    .set { itervar }
 
-    //STITCH_IMPUTATION( stitch_input )
-    //STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
-    //BCFTOOLS_INDEX_STITCH ( stitch_vcf )
-
-    //stitch_vcf
-    //.join( BCFTOOLS_INDEX_STITCH.out.csi )
-    //.map {
-    //    meta, vcf, csi ->
-    //    def new_meta = meta.clone()
-    //    new_meta.id = "joint_stitch_output"
-    //    [new_meta, vcf, csi]
-    //}
-    //.groupTuple ()
-    //.set { collected_vcfs }
-
-    //BCFTOOLS_CONCAT ( collected_vcfs )
-    //BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
-    //BCFTOOLS_INDEX_JOINT( genotype_vcf )
-    //BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
-
-    //versions.mix ( STITCH_GENERATEINPUTS.out.versions ) .set { versions }
-    //versions.mix ( STITCH_IMPUTATION.out.versions     ) .set { versions }
-    //versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ) .set { versions }
-    //versions.mix ( BCFTOOLS_CONCAT.out.versions       ) .set { versions }
-    //versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ) .set { versions }
-
-    //emit:
-    //genotype_vcf   // channel: [meta, vcf_file]
-    //genotype_index // channel: [meta, csi]
-
-    //versions       // channel: [versions.yml]
-
+    emit:
+    itervar
 }
+
+
+workflow SNP_SET_REFINEMENT {
+    versions = Channel.empty()
+
+    stitch_posfile.map { [["id": null, "iteration": 1], it] }.collect().set { itervar }
+
+    RECURSIVE_ROUTINE
+    .recurse ( itervar )
+    .times ( filter_value_list.size() )
+}
+
 
 //
 // Groovy functions
@@ -117,6 +106,9 @@ def read_filter_values ( filepath ) {
     }
 
     def String[] filter_value_list = snp_filtering_criteria
+    filter_value_list = filter_value_list
+    .findAll { it != "" } // to remove empty lines that can be present at the end of file
+    .collect { Float.parseFloat( it ) }
 
     return(filter_value_list)
 }

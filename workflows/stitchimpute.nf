@@ -30,9 +30,6 @@ def checkPathParamList = [
 
 for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 
-fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
-stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Check conditionally mandatory parameters
@@ -96,13 +93,6 @@ switch (params.mode) {
 
 }
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Initialise optional parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,8 +103,6 @@ skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK          } from '../subworkflows/local/input_check'
-include { PREPROCESSING        } from '../subworkflows/local/preprocessing'
 include { IMPUTATION           } from '../subworkflows/local/imputation'
 include { GRID_SEARCH          } from '../subworkflows/local/grid_search'
 include { SNP_SET_REFINEMENT   } from '../subworkflows/local/snp_set_refinement'
@@ -139,28 +127,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 workflow STITCHIMPUTE {
     versions = Channel.empty ()
 
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
-    INPUT_CHECK ( file(params.input) )
-    INPUT_CHECK.out.reads.set { reads }
-
-    //
-    // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
-    //
-    PREPROCESSING ( reads, fasta, stitch_posfile, skip_chr )
-
-    PREPROCESSING.out.collected_samples.set { collected_samples }
-    PREPROCESSING.out.reference        .set { reference         }
-    PREPROCESSING.out.positions        .set { positions         }
-
-    //
-    // Collate and dump software versions
-    //
-    versions.mix ( INPUT_CHECK.out.versions   ).set { versions }
-    versions.mix ( PREPROCESSING.out.versions ).set { versions }
-
-
     switch (params.mode) {
         case "imputation":
 
@@ -168,7 +134,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: run the imputation
             //
 
-            IMPUTATION ( positions, collected_samples, reference )
+            IMPUTATION ()
             versions.mix ( IMPUTATION.out.versions ).set { versions }
 
             break
@@ -179,7 +145,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: optimise parameters
             //
 
-            GRID_SEARCH  ( positions, collected_samples, reference )
+            GRID_SEARCH ()
             versions.mix ( GRID_SEARCH.out.versions ).set { versions }
 
             break
@@ -190,7 +156,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: refine SNP set
             //
 
-            SNP_SET_REFINEMENT  ( positions, collected_samples, reference )
+            SNP_SET_REFINEMENT ()
             //versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
             break

@@ -10,7 +10,7 @@ workflow PREPROCESSING {
     take:
     reads     // channel: [mandatory] tuples: [meta, cram, crai]
     fasta     // channel: [mandatory] file:   reference_genome_fasta
-    positions // channel: [mandatory] file:   positions_tsv
+    positions // channel: [mandatory] tuples: [meta, positions_tsv]
     skip_chr  // list   : [optional]  names of chromosome to skip
 
     main:
@@ -30,8 +30,10 @@ workflow PREPROCESSING {
     positions
     .combine ( chromosome_names )
     .map {
-        positions, chromosome_name ->
-        [["id": "positions_${chromosome_name}"], positions, chromosome_name]
+        meta, positions, chromosome_name ->
+        def new_meta = meta.clone()
+        new_meta.id = "positions_${chromosome_name}"
+        [new_meta, positions, chromosome_name]
     }
     .set{ positions }
 
