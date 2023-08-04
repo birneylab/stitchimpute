@@ -30,6 +30,17 @@ def checkPathParamList = [
 
 for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 
+fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
+stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Initialise optional parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Check conditionally mandatory parameters
@@ -103,6 +114,8 @@ switch (params.mode) {
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
+include { INPUT_CHECK          } from '../subworkflows/local/input_check'
+include { PREPROCESSING        } from '../subworkflows/local/preprocessing'
 include { IMPUTATION           } from '../subworkflows/local/imputation'
 include { GRID_SEARCH          } from '../subworkflows/local/grid_search'
 include { SNP_SET_REFINEMENT   } from '../subworkflows/local/snp_set_refinement'
@@ -127,6 +140,20 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 workflow STITCHIMPUTE {
     versions = Channel.empty ()
 
+    //
+    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    //
+    INPUT_CHECK ( file(params.input) )
+    INPUT_CHECK.out.reads.set { reads }
+
+    //
+    // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
+    //
+    stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
+    PREPROCESSING ( reads, fasta )
+    PREPROCESSING.out.collected_samples.set { collected_samples }
+    PREPROCESSING.out.reference        .set { reference         }
+
     switch (params.mode) {
         case "imputation":
 
@@ -134,7 +161,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: run the imputation
             //
 
-            IMPUTATION ()
+            IMPUTATION (collected_samples, reference, stitch_posfile, skip_chr)
             versions.mix ( IMPUTATION.out.versions ).set { versions }
 
             break
@@ -162,6 +189,9 @@ workflow STITCHIMPUTE {
             break
 
     }
+
+    versions.mix ( INPUT_CHECK.out.versions   ).set { versions }
+    versions.mix ( PREPROCESSING.out.versions ).set { versions }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         versions.unique().collectFile(name: 'collated_versions.yml')

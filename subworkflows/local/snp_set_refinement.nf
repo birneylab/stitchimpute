@@ -38,11 +38,16 @@ if (params.mode == "snp_set_refinement") {
 }
 
 
+//
+// Recursive subworkflow: takes only value channels
+//
+// NOTE: use merge instead of combine otherwise it combines the full recursion tree
+
 workflow RECURSIVE_ROUTINE {
     take:
-    itervar
+    itervar  // channel: [meta, stitch_poslist]
 
-    versions
+    versions // channel: [versions.yml]
 
     main:
     itervar.map {
@@ -114,10 +119,10 @@ workflow RECURSIVE_ROUTINE {
     BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
 
     itervar.map {
-        meta, positions_list ->
+        meta, positions ->
         new_meta = meta.clone()
         new_meta.iteration += 1
-        [new_meta, positions_list]
+        [new_meta, positions]
     }
     .set { itervar }
 
@@ -130,11 +135,14 @@ workflow RECURSIVE_ROUTINE {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
 
     emit:
-    itervar
+    itervar  // channel: [meta, stitch_poslist]
 
-    versions
+    versions // channel: [versions.yml]
 }
 
+//
+// Wrapper around the recursive part
+//
 
 workflow SNP_SET_REFINEMENT {
     versions = Channel.empty().collect()
@@ -148,7 +156,7 @@ workflow SNP_SET_REFINEMENT {
     versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
 
     emit:
-    versions
+    versions // channel: [versions.yml]
 }
 
 
