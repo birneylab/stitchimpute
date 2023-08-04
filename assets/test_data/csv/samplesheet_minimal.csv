@@ -1,0 +1,3 @@
+sample,cram,crai
+test_sample,${projectDir}/assets/test_data/cram/test_sample_olatipes_15:18000000-18001000.cram,${projectDir}/assets/test_data/cram/test_sample_olatipes_15:18000000-18001000.cram.crai
+test_sample2,${projectDir}/assets/test_data/cram/test_sample2_olatipes_15:18000000-18001000.cram,${projectDir}/assets/test_data/cram/test_sample2_olatipes_15:18000000-18001000.cram.crai

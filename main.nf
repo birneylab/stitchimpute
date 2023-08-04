@@ -52,9 +52,9 @@ WorkflowMain.initialise(workflow, params, log)
 include { STITCHIMPUTE } from './workflows/stitchimpute'
 
 //
-// WORKFLOW: Run main nf-core/stitchimpute analysis pipeline
+// WORKFLOW: Run main birneylab/stitchimpute analysis pipeline
 //
-workflow NFCORE_STITCHIMPUTE {
+workflow BIRNEYLAB_STITCHIMPUTE {
     STITCHIMPUTE ()
 }
 
@@ -69,7 +69,7 @@ workflow NFCORE_STITCHIMPUTE {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    NFCORE_STITCHIMPUTE ()
+    BIRNEYLAB_STITCHIMPUTE ()
 }
 
 /*

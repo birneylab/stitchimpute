@@ -1,5 +1,5 @@
 //
-// Run a simple imputation workflow
+// Run a parameter grid search
 //
 
 include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
@@ -20,26 +20,26 @@ workflow GRID_SEARCH {
 
     STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
 
-    Channel.fromPath ( params.stitch_grid_search )
+    Channel.fromPath ( params.grid_search_params )
     .splitCsv( header:true )
-    .set { stitch_grid_search_params }
+    .set { grid_search_params }
 
     positions.join ( STITCH_GENERATEINPUTS.out.stitch_input )
-    .combine ( stitch_grid_search_params )
+    .combine ( grid_search_params )
     .map {
-        meta, positions, chromosome_name, input, rdata, stitch_grid_search_params ->
+        meta, positions, chromosome_name, input, rdata, grid_search_params ->
         [
             [
                 "id"                   : "chromosome_${chromosome_name}"                                          ,
-                "publish_dir_subfolder": "K_${stitch_grid_search_params.K}_nGen_${stitch_grid_search_params.nGen}",
-                "params_comb"          : stitch_grid_search_params                                                ,
+                "publish_dir_subfolder": "K_${grid_search_params.K}_nGen_${grid_search_params.nGen}",
+                "params_comb"          : grid_search_params                                                ,
             ],
             positions,
             input,
             rdata,
             chromosome_name,
-            stitch_grid_search_params.K,
-            stitch_grid_search_params.nGen,
+            grid_search_params.K,
+            grid_search_params.nGen,
         ]
     }
     .set { stitch_input }

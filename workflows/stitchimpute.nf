@@ -40,31 +40,58 @@ stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile)
 */
 
 switch (params.mode) {
+
     case "imputation":
+
         if (!params.stitch_K) {
             error("No value was provided for the parameter stitch_K, which is required for the imputation workflow.")
         }
         if (!params.stitch_nGen) {
             error("No value was provided for the parameter stitch_nGen, which is required for the imputation workflow.")
         }
-        if (params.stitch_grid_search) {
-            log.warn("The parameter \"stitch_grid_search\" is set to but will not be used in the imputation workflow. Set the \"mode\" parameter to \"grid_search\" if you want to perform a parameter search.")
+        if (params.grid_search_params) {
+            log.warn("The parameter \"grid_search_params\" is set to but will not be used in the imputation workflow. Set the \"mode\" parameter to \"grid_search\" if you want to perform a parameter search.")
         }
+        if (params.snp_filtering_criteria) {
+            log.warn("The parameter \"snp_filtering_criteria\" is set to but will not be used in the imputation workflow. Set the \"mode\" parameter to \"snp_set_refinement\" if you want to refine the SNP set.")
+        }
+
         break
 
     case "grid_search":
+
         if (params.stitch_K) {
-            log.warn("The parameter stitch_K is set but will not be used in the \"grid_search\" workflow.")
+            log.warn("The parameter stitch_K is set but will not be used in the \"grid_search_params\" workflow.")
         }
         if (params.stitch_nGen) {
-            log.warn("The parameter stitch_nGen is set but will not be used in the \"grid_search\" workflow.")
+            log.warn("The parameter stitch_nGen is set but will not be used in the \"grid_search_params\" workflow.")
         }
-        if (!params.stitch_grid_search) {
-            error("No value was provided for the parameter \"stitch_grid_search\", which is required for the grid_search workflow.")
+        if (!params.grid_search_params) {
+            error("No value was provided for the parameter \"grid_search_params\", which is required for the grid search workflow.")
         }
+        if (params.snp_filtering_criteria) {
+            log.warn("The parameter \"snp_filtering_criteria\" is set to but will not be used in the grid search workflow. Set the \"mode\" parameter to \"snp_set_refinement\" if you want to refine the SNP set.")
+        }
+
         break
 
     case "snp_set_refinement":
+        // recursion required for this workflow
+        nextflow.preview.recursion = true
+
+        if (params.stitch_K) {
+            log.warn("The parameter stitch_K is set but will not be used in the \"snp_set_refinement\" workflow.")
+        }
+        if (params.stitch_nGen) {
+            log.warn("The parameter stitch_nGen is set but will not be used in the \"snp_set_refinement\" workflow.")
+        }
+        if (params.grid_search_params) {
+            log.warn("The parameter \"grid_search_params\" is set to but will not be used in the SNP set_refinement workflow. Set the \"mode\" parameter to \"snp_set_refinement\" if you want to refine the SNP set.")
+        }
+        if (!params.snp_filtering_criteria) {
+            error("No value was provided for the parameter \"snp_filtering_criteria\", which is required for the snp_set_refinement workflow.")
+        }
+
         break
 
 }
@@ -86,10 +113,11 @@ skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK   } from '../subworkflows/local/input_check'
-include { PREPROCESSING } from '../subworkflows/local/preprocessing'
-include { IMPUTATION    } from '../subworkflows/local/imputation'
-include { GRID_SEARCH   } from '../subworkflows/local/grid_search'
+include { INPUT_CHECK          } from '../subworkflows/local/input_check'
+include { PREPROCESSING        } from '../subworkflows/local/preprocessing'
+include { IMPUTATION           } from '../subworkflows/local/imputation'
+include { GRID_SEARCH          } from '../subworkflows/local/grid_search'
+include { SNP_SET_REFINEMENT   } from '../subworkflows/local/snp_set_refinement'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,7 +186,12 @@ workflow STITCHIMPUTE {
 
         case "snp_set_refinement":
 
-            error("Branch not yet implemented")
+            //
+            // SUBWORKFLOW: refine SNP set
+            //
+
+            SNP_SET_REFINEMENT  ( positions, collected_samples, reference )
+            //versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
             break
 

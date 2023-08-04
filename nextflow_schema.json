@@ -27,7 +27,7 @@
                     "default": "imputation",
                     "fa_icon": "fas fa-hand-pointer",
                     "description": "Which branch of the pipeline to run",
-                    "enum": ["imputation", "grid_search", "positions_refinement"]
+                    "enum": ["imputation", "grid_search", "snp_set_refinement"]
                 },
                 "outdir": {
                     "type": "string",
@@ -39,6 +39,22 @@
                     "type": "string",
                     "fa_icon": "fas fa-align-justify",
                     "help_text": "Chromosomes from the reference provided that should not be imputed. Multiple chromosomes can be separated by commas. Es. \"1,2,3\"."
+                },
+                "grid_search_params": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file-csv",
+                    "description": "CSV files containing the values of the K and nGen parameters to be used for the grid search workflow",
+                    "format": "file-path",
+                    "mimetype": "text/csv",
+                    "help_text": "Must have column names `K` and `nGen`. Each line corresponds to a combination of parameters to be tested."
+                },
+                "snp_filtering_criteria": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file-csv",
+                    "description": "CSV file containing the threshold for inclusion of SNPs in the iterative refinement process",
+                    "format": "file-path",
+                    "mimetype": "text/csv",
+                    "help_text": "TBD"
                 },
                 "email": {
                     "type": "string",
@@ -78,13 +94,6 @@
                     "fa_icon": "fas fa-hand-pointer",
                     "help_text": "See STITCH documentation for more details. Required for imputation mode.",
                     "minimum": 1
-                },
-                "stitch_grid_search": {
-                    "type": "string",
-                    "fa_icon": "fas fa-file-csv",
-                    "help_text": "Required for grid_search mode. Column names must be K and nGen.",
-                    "format": "file-path",
-                    "mimetype": "text/csv"
                 }
             },
             "required": ["stitch_posfile"],
