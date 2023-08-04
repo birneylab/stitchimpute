@@ -8,25 +8,22 @@ include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
 
+workflow RECURSIVE_ROUTINE {
+    take:
+    positions
+    collected_samples
+    reference
+    filter_value_list
+    iteration
 
-//snp_filtering_criteria = new File ( params.snp_filtering_criteria )
-//
-//if ( !snp_filtering_criteria.exists() ) {
-//    error("${params.snp_filtering_criteria} does not point to a valid file")
-//}
-//
-//print(snp_filtering_criteria)
+    main:
 
-//workflow RECURSIVE_ROUTINE {
-//    take:
-//    positions
-//    collected_samples
-//    reference
-//    filter_value
-//
-//    main:
-//
-//}
+    print(filter_value_list)
+
+    emit:
+
+
+}
 
 workflow SNP_SET_REFINEMENT {
     take:
@@ -37,7 +34,16 @@ workflow SNP_SET_REFINEMENT {
     main:
     versions = Channel.empty()
 
+    def float filter_value_list = read_filter_values( params.snp_filtering_criteria )
+    def int   iteration         = 1
 
+    RECURSIVE_ROUTINE(
+        positions,
+        collected_samples,
+        reference,
+        filter_value_list,
+        iteration,
+    )
 
     //STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
 
@@ -97,4 +103,20 @@ workflow SNP_SET_REFINEMENT {
 
     //versions       // channel: [versions.yml]
 
+}
+
+//
+// Groovy functions
+//
+
+def read_filter_values ( filepath ) {
+    snp_filtering_criteria = new File ( filepath )
+
+    if ( !snp_filtering_criteria.exists() ) {
+        error("${params.snp_filtering_criteria} does not point to a valid file")
+    }
+
+    def String[] filter_value_list = snp_filtering_criteria
+
+    return(filter_value_list)
 }
