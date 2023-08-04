@@ -76,11 +76,11 @@ switch (params.mode) {
         // recursion required for this workflow
         nextflow.preview.recursion = true
 
-        if (params.stitch_K) {
-            log.warn("The parameter stitch_K is set but will not be used in the \"snp_set_refinement\" workflow.")
+        if (!params.stitch_K) {
+            error("No value was provided for the parameter stitch_K, which is required for the SNP set refinement workflow.")
         }
-        if (params.stitch_nGen) {
-            log.warn("The parameter stitch_nGen is set but will not be used in the \"snp_set_refinement\" workflow.")
+        if (!params.stitch_nGen) {
+            error("No value was provided for the parameter stitch_nGen, which is required for the SNP set refinement workflow.")
         }
         if (params.grid_search_params) {
             log.warn("The parameter \"grid_search_params\" is set to but will not be used in the SNP set_refinement workflow. Set the \"mode\" parameter to \"snp_set_refinement\" if you want to refine the SNP set.")
@@ -157,7 +157,7 @@ workflow STITCHIMPUTE {
             //
 
             SNP_SET_REFINEMENT ()
-            //versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
+            versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
             break
 

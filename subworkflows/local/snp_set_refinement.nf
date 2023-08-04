@@ -42,6 +42,8 @@ workflow RECURSIVE_ROUTINE {
     take:
     itervar
 
+    versions
+
     main:
     itervar.map {
         meta, positions_list ->
@@ -50,6 +52,9 @@ workflow RECURSIVE_ROUTINE {
         [new_meta, positions_list]
     }
     .set { itervar }
+
+    Channel.value ( params.stitch_K    ).set { stitch_K    }
+    Channel.value ( params.stitch_nGen ).set { stitch_nGen }
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -62,13 +67,51 @@ workflow RECURSIVE_ROUTINE {
     //
     PREPROCESSING ( reads, fasta, itervar, skip_chr )
 
-    //PREPROCESSING.out.collected_samples.set { collected_samples }
-    //PREPROCESSING.out.reference        .set { reference         }
-    //PREPROCESSING.out.positions        .set { positions         }
+    PREPROCESSING.out.collected_samples.set { collected_samples }
+    PREPROCESSING.out.reference        .set { reference         }
+    PREPROCESSING.out.positions        .set { positions         }
 
-    //STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
+    STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
 
-    //itervar.map{ meta, positions_list -> [meta.iteration, meta.filter_value] }.view()
+    positions.join ( STITCH_GENERATEINPUTS.out.stitch_input )
+    .combine ( stitch_K )
+    .combine ( stitch_nGen )
+    .map {
+        meta, positions, chromosome_name, input, rdata, K, nGen ->
+        [
+            [
+                "id"                   : "chromosome_${chromosome_name}",
+                "publish_dir_subfolder": "iteration_${meta.iteration}"  ,
+            ],
+            positions,
+            input,
+            rdata,
+            chromosome_name,
+            K,
+            nGen,
+        ]
+    }
+    .set { stitch_input }
+
+    STITCH_IMPUTATION( stitch_input )
+    STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
+    BCFTOOLS_INDEX_STITCH ( stitch_vcf )
+
+    stitch_vcf
+    .join( BCFTOOLS_INDEX_STITCH.out.csi )
+    .map {
+        meta, vcf, csi ->
+        def new_meta = meta.clone()
+        new_meta.id = "joint_stitch_output"
+        [new_meta, vcf, csi]
+    }
+    .groupTuple ()
+    .set { collected_vcfs }
+
+    BCFTOOLS_CONCAT ( collected_vcfs )
+    BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
+    BCFTOOLS_INDEX_JOINT( genotype_vcf )
+    BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
 
     itervar.map {
         meta, positions_list ->
@@ -78,19 +121,34 @@ workflow RECURSIVE_ROUTINE {
     }
     .set { itervar }
 
+    versions.mix ( INPUT_CHECK.out.versions           ).set { versions }
+    versions.mix ( PREPROCESSING.out.versions         ).set { versions }
+    versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
+    versions.mix ( STITCH_IMPUTATION.out.versions     ).set { versions }
+    versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ).set { versions }
+    versions.mix ( BCFTOOLS_CONCAT.out.versions       ).set { versions }
+    versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
+
     emit:
     itervar
+
+    versions
 }
 
 
 workflow SNP_SET_REFINEMENT {
-    versions = Channel.empty()
+    versions = Channel.empty().collect()
 
     stitch_posfile.map { [["id": null, "iteration": 1], it] }.collect().set { itervar }
 
     RECURSIVE_ROUTINE
-    .recurse ( itervar )
+    .recurse ( itervar, versions )
     .times ( filter_value_list.size() )
+
+    versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
+
+    emit:
+    versions
 }
 
 
