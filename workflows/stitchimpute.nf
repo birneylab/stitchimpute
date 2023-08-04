@@ -147,8 +147,12 @@ workflow STITCHIMPUTE {
 
         case "grid_search":
 
+            //
+            // SUBWORKFLOW: optimise parameters
+            //
+
             GRID_SEARCH  ( positions, collected_samples, reference )
-            //versions.mix ( GRID_SEARCH.out.versions ).set { versions }
+            versions.mix ( GRID_SEARCH.out.versions ).set { versions }
 
             break
 

@@ -50,30 +50,30 @@ workflow GRID_SEARCH {
 
     stitch_vcf
     .join( BCFTOOLS_INDEX_STITCH.out.csi )
-    .view()
-    //.map {
-    //    meta, vcf, csi ->
-    //    meta.id = "joint_stitch_output"
-    //    [meta, vcf, csi]
-    //}
-    //.groupTuple ()
-    //.set { collected_vcfs }
+    .map {
+        meta, vcf, csi ->
+        def new_meta = meta.clone()
+        new_meta.id = "joint_stitch_output"
+        [new_meta, vcf, csi]
+    }
+    .groupTuple ()
+    .set { collected_vcfs }
 
-    //BCFTOOLS_CONCAT ( collected_vcfs )
-    //BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
-    //BCFTOOLS_INDEX_JOINT( genotype_vcf )
-    //BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
+    BCFTOOLS_CONCAT ( collected_vcfs )
+    BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
+    BCFTOOLS_INDEX_JOINT( genotype_vcf )
+    BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
 
-    //versions.mix ( STITCH_GENERATEINPUTS.out.versions ) .set { versions }
-    //versions.mix ( STITCH_IMPUTATION.out.versions     ) .set { versions }
-    //versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ) .set { versions }
-    //versions.mix ( BCFTOOLS_CONCAT.out.versions       ) .set { versions }
-    //versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ) .set { versions }
+    versions.mix ( STITCH_GENERATEINPUTS.out.versions ) .set { versions }
+    versions.mix ( STITCH_IMPUTATION.out.versions     ) .set { versions }
+    versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ) .set { versions }
+    versions.mix ( BCFTOOLS_CONCAT.out.versions       ) .set { versions }
+    versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ) .set { versions }
 
-    //emit:
-    //genotype_vcf   // channel: [meta, vcf_file]
-    //genotype_index // channel: [meta, csi]
+    emit:
+    genotype_vcf   // channel: [meta, vcf_file]
+    genotype_index // channel: [meta, csi]
 
-    //versions       // channel: [versions.yml]
+    versions       // channel: [versions.yml]
 
 }
