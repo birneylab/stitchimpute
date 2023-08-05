@@ -12,7 +12,7 @@ lint:
     - manifest.name
     - manifest.homePage
   merge_markers:
-    - tests/cram/test_sample_olatipes_15:18000000-18001000.cram
+    - assets/test_data/cram/test_sample_olatipes_15:18000000-18001000.cram
   multiqc_config:
     - assets/multiqc_config.yml
 
