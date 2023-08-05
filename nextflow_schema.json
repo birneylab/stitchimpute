@@ -38,7 +38,8 @@
                 "skip_chr": {
                     "type": "string",
                     "fa_icon": "fas fa-align-justify",
-                    "help_text": "Chromosomes from the reference provided that should not be imputed. Multiple chromosomes can be separated by commas. Es. \"1,2,3\"."
+                    "help_text": "Chromosomes from the reference provided that should not be imputed. Multiple chromosomes can be separated by commas. Es. \"1,2,3\".",
+                    "description": "Chromosomes to skip"
                 },
                 "grid_search_params": {
                     "type": "string",
@@ -81,19 +82,22 @@
                     "help_text": "Where to find file with positions to run. File is tab seperated with no header, one row per SNP, with col 1 = chromosome, col 2 = physical position (sorted from smallest to largest), col 3 = reference base, col 4 = alternate base. Bases are capitalized. Example first row: 1<tab>1000<tab>A<tab>G<tab>",
                     "format": "file-path",
                     "mimetype": "text/tab-separated-values",
-                    "fa_icon": "fas fa-file-alt"
+                    "fa_icon": "fas fa-file-alt",
+                    "description": "Positions to run the imputation over"
                 },
                 "stitch_K": {
                     "type": "integer",
                     "fa_icon": "fas fa-hand-point-up",
                     "help_text": "See STITCH documentation for more details. Required for imputation mode.",
-                    "minimum": 1
+                    "minimum": 1,
+                    "description": "Number of ancestral haplotypes"
                 },
                 "stitch_nGen": {
                     "type": "integer",
                     "fa_icon": "fas fa-hand-pointer",
                     "help_text": "See STITCH documentation for more details. Required for imputation mode.",
-                    "minimum": 1
+                    "minimum": 1,
+                    "description": "Number of generations since founding of the population"
                 }
             },
             "required": ["stitch_posfile"],
