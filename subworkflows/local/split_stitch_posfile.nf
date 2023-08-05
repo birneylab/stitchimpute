@@ -6,35 +6,28 @@ include { SEPARATEPOSITIONSBYCHR } from '../../modules/local/separatepositionsby
 
 workflow SPLIT_POSFILE {
     take:
-    reference
-    stitch_posfile // channel: [mandatory] tuples: [meta, positions_tsv]
-    skip_chr       // list   : [optional]  names of chromosome to skip
+    reference      // channel: [mandatory] [ meta, fasta, fasta_fai ]
+    stitch_posfile // channel: [mandatory] [ meta, stitch_posfile ]
+    chr_list       // channel: [mandatory] list of chromosomes to consider
 
     main:
     versions = Channel.empty()
 
-    reference
-    .map{ meta, fasta, fasta_fai -> fasta_fai }
-    .splitCsv ( sep:"\t" )
-    .map { name, length, offset, linebases, linewidth -> name }
-    .filter { name -> ! skip_chr.contains ( name ) }
-    .set { chromosome_names }
-
-    positions
-    .combine ( chromosome_names )
+    stitch_posfile
+    .combine ( chr_list.flatten() )
     .map {
-        meta, positions, chromosome_name ->
+        meta, stitch_posfile, chromosome_name ->
         def new_meta = meta.clone()
         new_meta.id = "positions_${chromosome_name}"
-        [new_meta, positions, chromosome_name]
+        [new_meta, stitch_posfile, chromosome_name]
     }
-    .set{ positions }
+    .set{ positions_to_split }
 
-    SEPARATEPOSITIONSBYCHR( positions )
+    SEPARATEPOSITIONSBYCHR( positions_to_split )
     SEPARATEPOSITIONSBYCHR.out.positions
-    .join ( positions )
+    .join ( positions_to_split )
     .map {
-        meta, positions_chr, positions_all, chromosome_name ->
+        meta, positions_chr, stitch_posfile, chromosome_name ->
         [meta, positions_chr, chromosome_name]
     }
     .set { positions }
@@ -43,7 +36,7 @@ workflow SPLIT_POSFILE {
     versions.mix ( SEPARATEPOSITIONSBYCHR.out.versions ) .set { versions }
 
     emit:
-    positions       // channel: [meta, positions, chromosome_name]
+    positions       // channel: [ meta, positions, chromosome_name ]
 
     versions        // channel: [ versions.yml ]
 }

@@ -2,50 +2,26 @@
 // Run a parameter grid search
 //
 
-include { INPUT_CHECK                             } from '../../subworkflows/local/input_check'
-include { PREPROCESSING                           } from '../../subworkflows/local/preprocessing'
+include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
 include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
 include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Initialise mandatory parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
-stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Initialise optional parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
-
 
 workflow GRID_SEARCH {
+    take:
+    collected_samples
+    reference
+    stitch_posfile
+    chr_list
+
+    main:
     versions = Channel.empty()
 
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
-    INPUT_CHECK ( file(params.input) )
-    INPUT_CHECK.out.reads.set { reads }
-
-    //
-    // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
-    //
-    stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
-    PREPROCESSING ( reads, fasta, stitch_posfile, skip_chr )
-
-    PREPROCESSING.out.collected_samples.set { collected_samples }
-    PREPROCESSING.out.reference        .set { reference         }
-    PREPROCESSING.out.positions        .set { positions         }
+    SPLIT_POSFILE ( reference, stitch_posfile, chr_list )
+    SPLIT_POSFILE.out.positions.set { positions }
 
     STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
 
@@ -93,8 +69,7 @@ workflow GRID_SEARCH {
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
     BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
 
-    versions.mix ( INPUT_CHECK.out.versions           ).set { versions }
-    versions.mix ( PREPROCESSING.out.versions         ).set { versions }
+    versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ) .set { versions }
     versions.mix ( STITCH_IMPUTATION.out.versions     ) .set { versions }
     versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ) .set { versions }
@@ -102,9 +77,9 @@ workflow GRID_SEARCH {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ) .set { versions }
 
     emit:
-    genotype_vcf   // channel: [meta, vcf_file]
-    genotype_index // channel: [meta, csi]
+    genotype_vcf   // channel: [ meta, vcf_file ]
+    genotype_index // channel: [ meta, csi ]
 
-    versions       // channel: [versions.yml]
+    versions       // channel: [ versions.yml ]
 
 }

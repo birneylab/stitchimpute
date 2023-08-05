@@ -2,81 +2,56 @@
 // Refine the set of positions via iterative filtering
 //
 
-include { INPUT_CHECK                             } from '../../subworkflows/local/input_check'
-include { PREPROCESSING                           } from '../../subworkflows/local/preprocessing'
+include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
 include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
 include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Initialise mandatory parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-fasta             = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
-stitch_posfile    = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Initialise optional parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Recursion specific parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-if (params.mode == "snp_set_refinement") {
-    filter_value_list = read_filter_values( params.snp_filtering_criteria )
-}
-
-
 //
 // Recursive subworkflow: takes only value channels
 //
-// NOTE: use merge instead of combine otherwise it combines the full recursion tree
+// Use first() when a recursive channel needs to be treated as constant
 
 workflow RECURSIVE_ROUTINE {
     take:
-    itervar  // channel: [meta, stitch_poslist]
+    collected_samples
+    reference
+    stitch_posfile
+    chr_list
+    filter_value_list
 
-    versions // channel: [versions.yml]
+    genotype_vcf
+    genotype_index
+
+    versions
 
     main:
-    itervar.map {
-        meta, positions_list ->
-        new_meta = meta.clone()
-        new_meta.filter_value = filter_value_list[new_meta.iteration - 1]
-        [new_meta, positions_list]
+    stitch_posfile
+    .combine( filter_value_list.first() )
+    .map {
+        meta, posfile, filter_value_list ->
+        def curr_filter_value = filter_value_list[meta.iteration - 1]
+        [meta, posfile, curr_filter_value]
     }
-    .set { itervar }
+    .set { stitch_posfile }
+
+    //
+    // filter code goes here
+    //
+
+    stitch_posfile
+    .map { meta, posfile, filter_value -> [meta, posfile] }
+    .set { stitch_posfile }
 
     Channel.value ( params.stitch_K    ).set { stitch_K    }
     Channel.value ( params.stitch_nGen ).set { stitch_nGen }
 
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
-    INPUT_CHECK ( file(params.input) )
-    INPUT_CHECK.out.reads.set { reads }
+    SPLIT_POSFILE ( reference.first(), stitch_posfile, chr_list.first() )
+    SPLIT_POSFILE.out.positions.set { positions }
 
-    //
-    // SUBWORKFLOW: index reference genomoe and prepare STITCH inputs
-    //
-    PREPROCESSING ( reads, fasta, itervar, skip_chr )
-
-    PREPROCESSING.out.collected_samples.set { collected_samples }
-    PREPROCESSING.out.reference        .set { reference         }
-    PREPROCESSING.out.positions        .set { positions         }
-
-    STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
+    STITCH_GENERATEINPUTS ( positions, collected_samples.first(), reference.first() )
 
     positions.join ( STITCH_GENERATEINPUTS.out.stitch_input )
     .combine ( stitch_K )
@@ -118,16 +93,15 @@ workflow RECURSIVE_ROUTINE {
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
     BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
 
-    itervar.map {
-        meta, positions ->
+    stitch_posfile.map {
+        meta, posfile ->
         new_meta = meta.clone()
-        new_meta.iteration += 1
-        [new_meta, positions]
+        new_meta.iteration = meta.iteration + 1
+        [new_meta, posfile]
     }
-    .set { itervar }
+    .set { stitch_posfile }
 
-    versions.mix ( INPUT_CHECK.out.versions           ).set { versions }
-    versions.mix ( PREPROCESSING.out.versions         ).set { versions }
+    versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
     versions.mix ( STITCH_IMPUTATION.out.versions     ).set { versions }
     versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ).set { versions }
@@ -135,9 +109,16 @@ workflow RECURSIVE_ROUTINE {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
 
     emit:
-    itervar  // channel: [meta, stitch_poslist]
+    collected_samples
+    reference
+    stitch_posfile
+    chr_list
+    filter_value_list
 
-    versions // channel: [versions.yml]
+    genotype_vcf
+    genotype_index
+
+    versions
 }
 
 //
@@ -145,25 +126,55 @@ workflow RECURSIVE_ROUTINE {
 //
 
 workflow SNP_SET_REFINEMENT {
+    take:
+    collected_samples
+    reference
+    stitch_posfile
+    chr_list
+
+    main:
     versions = Channel.empty().collect()
 
-    stitch_posfile.map { [["id": null, "iteration": 1], it] }.collect().set { itervar }
+    // will collect the output of each recursion
+    genotype_vcf   = Channel.empty().collect()
+    genotype_index = Channel.empty().collect()
+
+    stitch_posfile.map {
+        meta, stitch_posfile ->
+        new_meta = meta.clone()
+        new_meta.iteration = 1
+        [new_meta, stitch_posfile]
+    }.set { stitch_posfile }
+
+    (filter_value_list, niter) = read_filter_values ( params.snp_filtering_criteria )
 
     RECURSIVE_ROUTINE
-    .recurse ( itervar, versions )
-    .times ( filter_value_list.size() )
+    .recurse (
+        collected_samples,
+        reference,
+        stitch_posfile,
+        chr_list,
+        filter_value_list,
+        genotype_vcf,
+        genotype_index,
+        versions,
+    ).times ( niter )
+
+    RECURSIVE_ROUTINE.out.genotype_index.set { genotype_index }
+    RECURSIVE_ROUTINE.out.genotype_vcf  .set { genotype_vcf   }
 
     versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
 
     emit:
-    versions // channel: [versions.yml]
+    genotype_vcf   // channel: [ meta, vcf_file ]
+    genotype_index // channel: [ meta, csi ]
+
+    versions       // channel: [ versions.yml ]
 }
 
 
-//
-// Groovy functions
-//
-
+// read a iteration-specific filter values to a list and return it with the total number
+// of iterations to perform
 def read_filter_values ( filepath ) {
     snp_filtering_criteria = new File ( filepath )
 
@@ -172,9 +183,16 @@ def read_filter_values ( filepath ) {
     }
 
     def String[] filter_value_list = snp_filtering_criteria
+
     filter_value_list = filter_value_list
     .findAll { it != "" } // to remove empty lines that can be present at the end of file
     .collect { Float.parseFloat( it ) }
 
-    return(filter_value_list)
+    def niter = filter_value_list.size()
+
+    log.info(
+        "Running SNP set refinement with ${niter} iteration${niter > 1 ? "s" : ""} and using the following filter values: ${filter_value_list}"
+    )
+
+    return ( [filter_value_list, niter] )
 }

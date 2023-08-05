@@ -7,8 +7,9 @@ include { SAMTOOLS_FAIDX } from '../../modules/nf-core/samtools/faidx'
 
 workflow PREPROCESSING {
     take:
-    reads     // channel: [mandatory] tuples: [meta, cram, crai]
-    fasta     // channel: [mandatory] file:   reference_genome_fasta
+    reads     // channel: [mandatory] [ meta, cram, crai ]
+    fasta     // channel: [mandatory] [ fasta ]
+    skip_chr  // channel: [mandatory] list of chromosomes to skip
 
     main:
     versions = Channel.empty()
@@ -16,6 +17,14 @@ workflow PREPROCESSING {
     fasta.map { fasta -> [ [ id:fasta.baseName ], fasta ] }.set { fasta }
     SAMTOOLS_FAIDX ( fasta, [['id':null], []] )
     fasta.join ( SAMTOOLS_FAIDX.out.fai ).collect ().set { reference }
+
+    reference
+    .map{ meta, fasta, fasta_fai -> fasta_fai }
+    .splitCsv ( sep:"\t" )
+    .map { name, length, offset, linebases, linewidth -> name }
+    .filter { name -> ! skip_chr.contains ( name ) }
+    .collect ()
+    .set { chr_list }
 
     reads
     .map { meta, cram, crai -> cram[-1] as String } // cram name without path
@@ -34,8 +43,9 @@ workflow PREPROCESSING {
     versions.mix ( SAMTOOLS_FAIDX.out.versions         ) .set { versions }
 
     emit:
-    collected_samples // channel: [meta, collected_crams, collected_crais, stitch_cramlist]
-    reference         // channel: [meta, fasta, fasta_fai]
+    collected_samples // channel: [ meta, collected_crams, collected_crais, stitch_cramlist ]
+    reference         // channel: [ meta, fasta, fasta_fai ]
+    chr_list          // channel: list of chromosomes to consider
 
-    versions        // channel: [ versions.yml ]
+    versions          // channel: [ versions.yml ]
 }

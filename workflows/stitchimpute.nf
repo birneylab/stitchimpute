@@ -147,12 +147,13 @@ workflow STITCHIMPUTE {
     INPUT_CHECK.out.reads.set { reads }
 
     //
-    // SUBWORKFLOW: index reference genomoe and prepare STITCH imputats
+    // SUBWORKFLOW: index reference genomoe and prepare list of samples
     //
     stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
-    PREPROCESSING ( reads, fasta )
+    PREPROCESSING ( reads, fasta, skip_chr )
     PREPROCESSING.out.collected_samples.set { collected_samples }
     PREPROCESSING.out.reference        .set { reference         }
+    PREPROCESSING.out.chr_list         .set { chr_list          }
 
     switch (params.mode) {
         case "imputation":
@@ -161,7 +162,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: run the imputation
             //
 
-            IMPUTATION (collected_samples, reference, stitch_posfile, skip_chr)
+            IMPUTATION ( collected_samples, reference, stitch_posfile, chr_list )
             versions.mix ( IMPUTATION.out.versions ).set { versions }
 
             break
@@ -172,7 +173,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: optimise parameters
             //
 
-            GRID_SEARCH ()
+            GRID_SEARCH ( collected_samples, reference, stitch_posfile, chr_list )
             versions.mix ( GRID_SEARCH.out.versions ).set { versions }
 
             break
@@ -183,7 +184,7 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: refine SNP set
             //
 
-            SNP_SET_REFINEMENT ()
+            SNP_SET_REFINEMENT ( collected_samples, reference, stitch_posfile, chr_list )
             versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
             break

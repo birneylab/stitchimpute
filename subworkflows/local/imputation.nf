@@ -15,12 +15,12 @@ workflow IMPUTATION {
     collected_samples
     reference
     stitch_posfile
-    skip_chr
+    chr_list
 
     main:
     versions = Channel.empty()
 
-    SPLIT_POSFILE ( reference, stitch_posfile, skip_chr )
+    SPLIT_POSFILE ( reference, stitch_posfile, chr_list )
     SPLIT_POSFILE.out.positions.set { positions }
 
     STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
@@ -66,9 +66,9 @@ workflow IMPUTATION {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
 
     emit:
-    genotype_vcf   // channel: [meta, vcf_file]
-    genotype_index // channel: [meta, csi]
+    genotype_vcf   // channel: [ meta, vcf_file ]
+    genotype_index // channel: [ meta, csi ]
 
-    versions       // channel: [versions.yml]
+    versions       // channel: [ versions.yml ]
 
 }
