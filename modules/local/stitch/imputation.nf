@@ -9,7 +9,6 @@ process STITCH_IMPUTATION {
 
     input:
     tuple val(meta ), path(posfile), path(input), path(RData), val(chromosome_name), val(K), val(nGen)
-    tuple val(meta2), path(genfile)
 
     output:
     tuple val(meta), path("*.vcf.gz")          , emit: vcf
@@ -23,10 +22,7 @@ process STITCH_IMPUTATION {
     script:
     def prefix      = task.ext.prefix ?: "${meta.id}"
     def args        = task.ext.args   ?: ""
-    def genfile_arg = genfile         ?  "--genfile ${genfile}": ""
     def out_vcf     = "${prefix}.vcf.gz"
-
-    params.mode == "imputation"
     """
     STITCH.R \\
         --chr ${chromosome_name} \\
@@ -38,11 +34,11 @@ process STITCH_IMPUTATION {
         --nCores ${task.cpus} \\
         --regenerateInput FALSE \\
         --originalRegionName ${chromosome_name} \\
-        ${genfile_arg} ${args}
+        ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")"))
+        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")")
     END_VERSIONS
     """
 
@@ -55,7 +51,7 @@ process STITCH_IMPUTATION {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")"))
+        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")")
     END_VERSIONS
     """
 }

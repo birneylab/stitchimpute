@@ -39,8 +39,8 @@ stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ground_truth_vcf = params.ground_truth_vcf ? Channel.fromPath(params.ground_truth_vcf).first() : Channel.empty()
-skip_chr         = params.skip_chr         ? params.skip_chr.split( "," )                        : []
+ground_truth = params.ground_truth_vcf ? Channel.fromPath(params.ground_truth_vcf).first() : Channel.empty()
+skip_chr     = params.skip_chr         ? params.skip_chr.split( "," )                        : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,11 +115,12 @@ switch (params.mode) {
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK          } from '../subworkflows/local/input_check'
-include { PREPROCESSING        } from '../subworkflows/local/preprocessing'
-include { IMPUTATION           } from '../subworkflows/local/imputation'
-include { GRID_SEARCH          } from '../subworkflows/local/grid_search'
-include { SNP_SET_REFINEMENT   } from '../subworkflows/local/snp_set_refinement'
+include { INPUT_CHECK        } from '../subworkflows/local/input_check'
+include { PREPROCESSING      } from '../subworkflows/local/preprocessing'
+include { IMPUTATION         } from '../subworkflows/local/imputation'
+include { GRID_SEARCH        } from '../subworkflows/local/grid_search'
+include { SNP_SET_REFINEMENT } from '../subworkflows/local/snp_set_refinement'
+include { POSTPROCESSING     } from '../subworkflows/local/postprocessing'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,7 +131,7 @@ include { SNP_SET_REFINEMENT   } from '../subworkflows/local/snp_set_refinement'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,10 +152,12 @@ workflow STITCHIMPUTE {
     // SUBWORKFLOW: index reference genomoe and prepare list of samples
     //
     stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
-    PREPROCESSING ( reads, fasta, skip_chr, ground_truth_vcf )
+
+    PREPROCESSING ( reads, fasta, skip_chr, ground_truth )
     PREPROCESSING.out.collected_samples.set { collected_samples }
     PREPROCESSING.out.reference        .set { reference         }
     PREPROCESSING.out.chr_list         .set { chr_list          }
+    PREPROCESSING.out.ground_truth     .set { ground_truth      }
 
     switch (params.mode) {
         case "imputation":
@@ -164,6 +167,7 @@ workflow STITCHIMPUTE {
             //
 
             IMPUTATION ( collected_samples, reference, stitch_posfile, chr_list )
+            IMPUTATION.out.genotype_vcf.set { genotype_vcf }
             versions.mix ( IMPUTATION.out.versions ).set { versions }
 
             break
@@ -175,6 +179,7 @@ workflow STITCHIMPUTE {
             //
 
             GRID_SEARCH ( collected_samples, reference, stitch_posfile, chr_list )
+            GRID_SEARCH.out.genotype_vcf.set { genotype_vcf }
             versions.mix ( GRID_SEARCH.out.versions ).set { versions }
 
             break
@@ -186,14 +191,22 @@ workflow STITCHIMPUTE {
             //
 
             SNP_SET_REFINEMENT ( collected_samples, reference, stitch_posfile, chr_list )
+            SNP_SET_REFINEMENT.out.genotype_vcf.set { genotype_vcf }
             versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
             break
 
     }
 
-    versions.mix ( INPUT_CHECK.out.versions   ).set { versions }
-    versions.mix ( PREPROCESSING.out.versions ).set { versions }
+    //
+    // SUBWORKFLOW: calculate ground truth correlation and make plots
+    //
+
+    POSTPROCESSING ( genotype_vcf, ground_truth )
+
+    versions.mix ( INPUT_CHECK.out.versions    ).set { versions }
+    versions.mix ( PREPROCESSING.out.versions  ).set { versions }
+    versions.mix ( POSTPROCESSING.out.versions ).set { versions }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         versions.unique().collectFile(name: 'collated_versions.yml')

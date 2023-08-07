@@ -16,16 +16,15 @@ include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/
 
 workflow RECURSIVE_ROUTINE {
     take:
-    collected_samples
-    reference
-    stitch_posfile
-    chr_list
-    filter_value_list
+    collected_samples // channel: [mandatory] [ meta, collected_crams, collected_crais, cramlist ]
+    reference         // channel: [mandatory] [ meta, fasta, fasta_fai ]
+    stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
+    chr_list          // channel: [mandatory] list of chromosomes names
+    filter_value_list // channel: [mandatory] list of filter values
 
-    genotype_vcf
-    genotype_index
+    genotype_vcf      // channel: [mandatory] [ meta, vcf, vcf_index ]
 
-    versions
+    versions          // channel: [mandatory] [ versions.yml ]
 
     main:
     stitch_posfile
@@ -91,7 +90,7 @@ workflow RECURSIVE_ROUTINE {
     BCFTOOLS_CONCAT ( collected_vcfs )
     BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
-    BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
+    genotype_vcf.join ( BCFTOOLS_INDEX_JOINT.out.csi ).set { genotype_vcf }
 
     stitch_posfile.map {
         meta, posfile ->
@@ -109,16 +108,15 @@ workflow RECURSIVE_ROUTINE {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
 
     emit:
-    collected_samples
-    reference
-    stitch_posfile
-    chr_list
-    filter_value_list
+    collected_samples // channel: [ meta, collected_crams, collected_crais, cramlist ]
+    reference         // channel: [ meta, fasta, fasta_fai ]
+    stitch_posfile    // channel: [ meta, stitch_posfile ]
+    chr_list          // channel: list of chromosomes names
+    filter_value_list // channel: list of filter values
 
-    genotype_vcf
-    genotype_index
+    genotype_vcf      // channel: [ meta, vcf, vcf_index ]
 
-    versions
+    versions          // channel: [ versions.yml ]
 }
 
 //
@@ -127,17 +125,16 @@ workflow RECURSIVE_ROUTINE {
 
 workflow SNP_SET_REFINEMENT {
     take:
-    collected_samples
-    reference
-    stitch_posfile
-    chr_list
+    collected_samples // channel: [mandatory] [ meta, collected_crams, collected_crais, cramlist ]
+    reference         // channel: [mandatory] [ meta, fasta, fasta_fai ]
+    stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
+    chr_list          // channel: [mandatory] list of chromosomes names
 
     main:
     versions = Channel.empty().collect()
 
     // will collect the output of each recursion
     genotype_vcf   = Channel.empty().collect()
-    genotype_index = Channel.empty().collect()
 
     stitch_posfile.map {
         meta, stitch_posfile ->
@@ -156,20 +153,17 @@ workflow SNP_SET_REFINEMENT {
         chr_list,
         filter_value_list,
         genotype_vcf,
-        genotype_index,
         versions,
     ).times ( niter )
 
-    RECURSIVE_ROUTINE.out.genotype_index.set { genotype_index }
     RECURSIVE_ROUTINE.out.genotype_vcf  .set { genotype_vcf   }
 
     versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
 
     emit:
-    genotype_vcf   // channel: [ meta, vcf_file ]
-    genotype_index // channel: [ meta, csi ]
+    genotype_vcf // channel: [ meta, vcf, vcf_index ]
 
-    versions       // channel: [ versions.yml ]
+    versions     // channel: [ versions.yml ]
 }
 
 

@@ -12,10 +12,10 @@ include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/
 
 workflow IMPUTATION {
     take:
-    collected_samples
-    reference
-    stitch_posfile
-    chr_list
+    collected_samples // channel: [mandatory] [ meta, collected_crams, collected_crais, cramlist ]
+    reference         // channel: [mandatory] [ meta, fasta, fasta_fai ]
+    stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
+    chr_list          // channel: [mandatory] list of chromosomes names
 
     main:
     versions = Channel.empty()
@@ -43,7 +43,7 @@ workflow IMPUTATION {
     }
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input, [["id": null], []] )
+    STITCH_IMPUTATION( stitch_input )
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
@@ -56,7 +56,7 @@ workflow IMPUTATION {
     BCFTOOLS_CONCAT ( collected_vcfs )
     BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
-    BCFTOOLS_INDEX_JOINT.out.csi.set { genotype_index }
+    genotype_vcf.join ( BCFTOOLS_INDEX_JOINT.out.csi ).set { genotype_vcf }
 
     versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
@@ -66,9 +66,8 @@ workflow IMPUTATION {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
 
     emit:
-    genotype_vcf   // channel: [ meta, vcf_file ]
-    genotype_index // channel: [ meta, csi ]
+    genotype_vcf // channel: [ meta, vcf, vcf_index ]
 
-    versions       // channel: [ versions.yml ]
+    versions     // channel: [ versions.yml ]
 
 }

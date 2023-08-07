@@ -4,17 +4,14 @@
 //
 
 include { SAMTOOLS_FAIDX                                             } from '../../modules/nf-core/samtools/faidx'
-include { SAMTOOLS_SAMPLES                                           } from '../../modules/local/samtools/samples'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_GROUND_TRUTH              } from '../../modules/nf-core/bcftools/index'
-include { BCFTOOLS_QUERY as BCFTOOLS_QUERY_GROUND_TRUTH              } from '../../modules/nf-core/bcftools/query'
-include { BCFTOOLS_QUERY as BCFTOOLS_QUERY_GROUND_TRUTH_SAMPLE_NAMES } from '../../modules/nf-core/bcftools/query'
 
 workflow PREPROCESSING {
     take:
-    reads            // channel: [mandatory] [ meta, cram, crai ]
-    fasta            // channel: [mandatory] [ fasta ]
-    skip_chr         // channel: [mandatory] list of chromosomes to skip
-    ground_truth_vcf // channel: [optional]  [ vcf_file ]
+    reads        // channel: [mandatory] [ meta, cram, crai ]
+    fasta        // channel: [mandatory] [ fasta ]
+    skip_chr     // channel: [mandatory] list of chromosomes to skip
+    ground_truth // channel: [optional]  [ vcf_file ]
 
     main:
     versions = Channel.empty()
@@ -43,37 +40,22 @@ workflow PREPROCESSING {
     .collect () // needed to make it broadcastable
     .set { collected_samples }
 
-    ground_truth_vcf.map { [["id": "ground_truth_vcf"], it] }.set { ground_truth_vcf }
-    BCFTOOLS_INDEX_GROUND_TRUTH ( ground_truth_vcf )
+    ground_truth.map { [["id": "ground_truth_vcf"], it] }.set { ground_truth }
+    BCFTOOLS_INDEX_GROUND_TRUTH ( ground_truth )
 
-    ground_truth_vcf
+    ground_truth
     .join( BCFTOOLS_INDEX_GROUND_TRUTH.out.csi )
-    .set { ground_truth_vcf }
-
-    BCFTOOLS_QUERY_GROUND_TRUTH              ( ground_truth_vcf, [], [], [] )
-    BCFTOOLS_QUERY_GROUND_TRUTH_SAMPLE_NAMES ( ground_truth_vcf, [], [], [] )
-
-    reads
-    .branch {
-        high_cov:  it[0].high_cov
-        low_cov : !it[0].high_cov
-    }
-    .set { reads }
-
-    reads.high_cov
-    .map { meta, cram, crai -> [["id": "ground_truth_samples"], cram, crai] }
-    .groupTuple ()
-    .set { collected_ground_truth_reads }
-
-    SAMTOOLS_SAMPLES( collected_ground_truth_reads )
+    .set { ground_truth }
 
     // Gather versions of all tools used
-    versions.mix ( SAMTOOLS_FAIDX.out.versions ) .set { versions }
+    versions.mix ( SAMTOOLS_FAIDX.out.versions              ) .set { versions }
+    versions.mix ( BCFTOOLS_INDEX_GROUND_TRUTH.out.versions ) .set { versions }
 
     emit:
     collected_samples // channel: [ meta, collected_crams, collected_crais, stitch_cramlist ]
     reference         // channel: [ meta, fasta, fasta_fai ]
     chr_list          // channel: list of chromosomes to consider
+    ground_truth      // channel: [ meta, vcf, vcf_index ]
 
     versions          // channel: [ versions.yml ]
 }
