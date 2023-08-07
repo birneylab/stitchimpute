@@ -43,7 +43,7 @@ workflow IMPUTATION {
     }
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input )
+    STITCH_IMPUTATION( stitch_input, [["id": null], []] )
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 

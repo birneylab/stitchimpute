@@ -142,6 +142,22 @@
                 }
             }
         },
+        "ground_truth": {
+            "title": "Ground truth",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "help_text": "",
+            "properties": {
+                "ground_truth_vcf": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file",
+                    "help_text": "Accepted format are vcf, vcf.gz, and bcf. Sample names must be identical to the sample names in the SM tag of the cram indicated in the samplesheet. Used to calculate per-sample correlation with the imputation results. The file is re-formatted appropriately and given in input to STITCH with the --genfile flag.",
+                    "format": "file-path"
+                }
+            },
+            "fa_icon": "fas fa-check"
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -346,6 +362,9 @@
         },
         {
             "$ref": "#/definitions/reference_genome_options"
+        },
+        {
+            "$ref": "#/definitions/ground_truth"
         },
         {
             "$ref": "#/definitions/institutional_config_options"

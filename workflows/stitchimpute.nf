@@ -39,7 +39,8 @@ stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-skip_chr = params.skip_chr ? params.skip_chr.split( "," ) : []
+ground_truth_vcf = params.ground_truth_vcf ? Channel.fromPath(params.ground_truth_vcf).first() : Channel.empty()
+skip_chr         = params.skip_chr         ? params.skip_chr.split( "," )                        : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +151,7 @@ workflow STITCHIMPUTE {
     // SUBWORKFLOW: index reference genomoe and prepare list of samples
     //
     stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
-    PREPROCESSING ( reads, fasta, skip_chr )
+    PREPROCESSING ( reads, fasta, skip_chr, ground_truth_vcf )
     PREPROCESSING.out.collected_samples.set { collected_samples }
     PREPROCESSING.out.reference        .set { reference         }
     PREPROCESSING.out.chr_list         .set { chr_list          }

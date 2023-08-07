@@ -8,7 +8,8 @@ process STITCH_IMPUTATION {
         'biocontainers/r-stitch:1.6.8--r42h37595e4_0' }"
 
     input:
-    tuple val(meta), path(posfile), path(input), path(RData), val(chromosome_name), val(K), val(nGen)
+    tuple val(meta ), path(posfile), path(input), path(RData), val(chromosome_name), val(K), val(nGen)
+    tuple val(meta2), path(genfile)
 
     output:
     tuple val(meta), path("*.vcf.gz")          , emit: vcf
@@ -20,9 +21,10 @@ process STITCH_IMPUTATION {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix  = task.ext.prefix ?: "${meta.id}"
-    def args    = task.ext.args   ?: ""
-    def out_vcf = "${prefix}.vcf.gz"
+    def prefix      = task.ext.prefix ?: "${meta.id}"
+    def args        = task.ext.args   ?: ""
+    def genfile_arg = genfile         ?  "--genfile ${genfile}": ""
+    def out_vcf     = "${prefix}.vcf.gz"
 
     params.mode == "imputation"
     """
@@ -36,7 +38,7 @@ process STITCH_IMPUTATION {
         --nCores ${task.cpus} \\
         --regenerateInput FALSE \\
         --originalRegionName ${chromosome_name} \\
-        ${args}
+        ${genfile_arg} ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
