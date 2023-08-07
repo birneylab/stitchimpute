@@ -1,5 +1,4 @@
-// calculate pearson correlation SNP-wise for true and imputed dosage. Zarr store is
-// modified in place
+// calculate pearson correlation SNP-wise for true and imputed dosage
 process ANNDATA_CALCULATE_PEARSON_R {
     tag "$meta.id"
     label 'process_high'
@@ -14,8 +13,8 @@ process ANNDATA_CALCULATE_PEARSON_R {
     tuple val(meta), path(adata_zarr)
 
     output:
-    tuple val(meta), path(adata_zarr, type: "dir") , emit: zarr
-    path "versions.yml"                            , emit: versions
+    tuple val(meta), path("*.csv.gz"), emit: csv
+    path "versions.yml"              , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -29,6 +28,7 @@ process ANNDATA_CALCULATE_PEARSON_R {
     import anndata as an
     import dask
     import dask.array as da
+    import dask.dataframe as dd
     import os
     import sys
 
@@ -44,11 +44,13 @@ process ANNDATA_CALCULATE_PEARSON_R {
         axis = 0,
     )
 
-    da.to_zarr(
-        adata.varm["pearson_r"],
-        "${adata_zarr}/varm/pearson_r",
-        overwrite = True
+    ddf = dd.from_dask_array(
+        da.stack([adata.varm["pearson_r"], adata.varm["info_score"]], axis = 1),
+        columns = ["pearson_r", "info_score"],
     )
+
+    ddf.to_csv("${prefix}.performance.csv.gz", compression = "gzip")
+
     ver_anndata = an.__version__
     ver_dask = dask.__version__
 
