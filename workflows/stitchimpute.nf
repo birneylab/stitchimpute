@@ -39,7 +39,7 @@ stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ground_truth = params.ground_truth_vcf ? Channel.fromPath(params.ground_truth_vcf).first() : Channel.empty()
+ground_truth = params.ground_truth_vcf ? Channel.fromPath(params.ground_truth_vcf).collect() : Channel.empty()
 skip_chr     = params.skip_chr         ? params.skip_chr.split( "," )                        : []
 
 /*
@@ -168,7 +168,15 @@ workflow STITCHIMPUTE {
 
             IMPUTATION ( collected_samples, reference, stitch_posfile, chr_list )
             IMPUTATION.out.genotype_vcf.set { genotype_vcf }
-            versions.mix ( IMPUTATION.out.versions ).set { versions }
+
+            //
+            // SUBWORKFLOW: calculate ground truth correlation and make plots
+            //
+
+            POSTPROCESSING ( genotype_vcf, ground_truth )
+
+            versions.mix ( IMPUTATION.out.versions     ).set { versions }
+            versions.mix ( POSTPROCESSING.out.versions ).set { versions }
 
             break
 
@@ -180,7 +188,15 @@ workflow STITCHIMPUTE {
 
             GRID_SEARCH ( collected_samples, reference, stitch_posfile, chr_list )
             GRID_SEARCH.out.genotype_vcf.set { genotype_vcf }
-            versions.mix ( GRID_SEARCH.out.versions ).set { versions }
+
+            //
+            // SUBWORKFLOW: calculate ground truth correlation and make plots
+            //
+
+            POSTPROCESSING ( genotype_vcf, ground_truth )
+
+            versions.mix ( GRID_SEARCH.out.versions    ).set { versions }
+            versions.mix ( POSTPROCESSING.out.versions ).set { versions }
 
             break
 
@@ -190,23 +206,20 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: refine SNP set
             //
 
-            SNP_SET_REFINEMENT ( collected_samples, reference, stitch_posfile, chr_list )
+            SNP_SET_REFINEMENT (
+                collected_samples, reference, stitch_posfile, chr_list, ground_truth
+            )
             SNP_SET_REFINEMENT.out.genotype_vcf.set { genotype_vcf }
+
             versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
             break
 
     }
 
-    //
-    // SUBWORKFLOW: calculate ground truth correlation and make plots
-    //
-
-    POSTPROCESSING ( genotype_vcf, ground_truth )
 
     versions.mix ( INPUT_CHECK.out.versions    ).set { versions }
     versions.mix ( PREPROCESSING.out.versions  ).set { versions }
-    versions.mix ( POSTPROCESSING.out.versions ).set { versions }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         versions.unique().collectFile(name: 'collated_versions.yml')

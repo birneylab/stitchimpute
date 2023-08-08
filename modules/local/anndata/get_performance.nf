@@ -1,5 +1,5 @@
 // calculate pearson correlation SNP-wise for true and imputed dosage
-process ANNDATA_CALCULATE_PEARSON_R {
+process ANNDATA_GET_PERFORMANCE {
     tag "$meta.id"
     label 'process_high'
 
@@ -20,8 +20,9 @@ process ANNDATA_CALCULATE_PEARSON_R {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix      = task.ext.prefix ?: "${meta.id}"
-    def args        = task.ext.args   ?: ""
+    def prefix       = task.ext.prefix ?: "${meta.id}"
+    def args         = task.ext.args   ?: ""
+    def ground_truth = params.ground_truth_vcf ? "True" : "False"
     """
     #! /usr/bin/env python
 
@@ -29,6 +30,7 @@ process ANNDATA_CALCULATE_PEARSON_R {
     import dask
     import dask.array as da
     import pandas as pd
+    import numpy as np
     import os
     import sys
 
@@ -39,17 +41,22 @@ process ANNDATA_CALCULATE_PEARSON_R {
     adata = read_dask_anndata("${adata_zarr}")
     df = adata.var
 
-    df["pearson_r"] = slicewise_pearson_r(
-        Y_true = adata.layers["true_dosage"],
-        Y_pred = adata.layers["dosage_${params.correlation_imputed_dosage_type}"],
-        axis = 0,
-    )
+    if ${ground_truth}:
+        df["pearson_r"] = slicewise_pearson_r(
+            Y_true = adata.layers["true_dosage"],
+            Y_pred = adata.layers["dosage_${params.correlation_imputed_dosage_type}"],
+            axis = 0,
+        )
+    else:
+        df["pearson_r"] = np.nan
+
     df["info_score"] = adata.varm["info_score"]
     df.to_csv("${prefix}.performance.csv.gz", index = False)
 
     ver_anndata = an.__version__
     ver_dask = dask.__version__
     ver_pandas = pd.__version__
+    ver_numpy = np.__version__
 
     os.system(
         "cat <<-END_VERSIONS > versions.yml\\n" +
@@ -58,6 +65,7 @@ process ANNDATA_CALCULATE_PEARSON_R {
         f"   anndata: {ver_anndata}\\n" +
         f"   dask: {ver_dask}\\n" +
         f"   pandas: {ver_pandas}\\n" +
+        f"   numpy: {ver_numpy}\\n" +
         "END_VERSIONS"
     )
     """
@@ -74,6 +82,7 @@ process ANNDATA_CALCULATE_PEARSON_R {
         anndata: \$(python -c "import anndata\\nprint(anndata.__version__)")
         dask: \$(python -c "import dask\\nprint(dask.__version__)")
         pandas: \$(python -c "import pandas\\nprint(pandas.__version__)")
+        numpy: \$(python -c "import numpy\\nprint(numpy.__version__)")
     END_VERSIONS
     """
 }

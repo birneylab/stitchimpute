@@ -3,6 +3,8 @@
 //
 
 include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
+include { POSTPROCESSING                          } from '../../subworkflows/local/postprocessing'
+
 include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
 include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
@@ -23,6 +25,7 @@ workflow RECURSIVE_ROUTINE {
     filter_value_list // channel: [mandatory] list of filter values
 
     genotype_vcf      // channel: [mandatory] [ meta, vcf, vcf_index ]
+    ground_truth_vcf  // channel: [optional]  [ meta, vcf, vcf_index ]
 
     versions          // channel: [mandatory] [ versions.yml ]
 
@@ -31,17 +34,11 @@ workflow RECURSIVE_ROUTINE {
     .combine( filter_value_list.first() )
     .map {
         meta, posfile, filter_value_list ->
-        def curr_filter_value = filter_value_list[meta.iteration - 1]
-        [meta, posfile, curr_filter_value]
+        def new_meta = meta.clone()
+        new_meta.curr_filter_value = filter_value_list[meta.iteration]
+        new_meta.iteration         = meta.iteration + 1
+        [new_meta, posfile]
     }
-    .set { stitch_posfile }
-
-    //
-    // filter code goes here
-    //
-
-    stitch_posfile
-    .map { meta, posfile, filter_value -> [meta, posfile] }
     .set { stitch_posfile }
 
     Channel.value ( params.stitch_K    ).set { stitch_K    }
@@ -92,13 +89,12 @@ workflow RECURSIVE_ROUTINE {
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
     genotype_vcf.join ( BCFTOOLS_INDEX_JOINT.out.csi ).set { genotype_vcf }
 
-    stitch_posfile.map {
-        meta, posfile ->
-        new_meta = meta.clone()
-        new_meta.iteration = meta.iteration + 1
-        [new_meta, posfile]
-    }
-    .set { stitch_posfile }
+    POSTPROCESSING( genotype_vcf, ground_truth_vcf.first() )
+    POSTPROCESSING.out.performance.set { performance }
+
+    //
+    // filter code goes here
+    //
 
     versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
@@ -106,6 +102,7 @@ workflow RECURSIVE_ROUTINE {
     versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ).set { versions }
     versions.mix ( BCFTOOLS_CONCAT.out.versions       ).set { versions }
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
+    versions.mix ( POSTPROCESSING.out.versions        ).set { versions }
 
     emit:
     collected_samples // channel: [ meta, collected_crams, collected_crais, cramlist ]
@@ -115,6 +112,7 @@ workflow RECURSIVE_ROUTINE {
     filter_value_list // channel: list of filter values
 
     genotype_vcf      // channel: [ meta, vcf, vcf_index ]
+    ground_truth_vcf  // channel: [ meta, vcf, vcf_index ]
 
     versions          // channel: [ versions.yml ]
 }
@@ -129,6 +127,7 @@ workflow SNP_SET_REFINEMENT {
     reference         // channel: [mandatory] [ meta, fasta, fasta_fai ]
     stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
     chr_list          // channel: [mandatory] list of chromosomes names
+    ground_truth_vcf  // channel: [mandatory] [ meta, vcf, vcf_index ]
 
     main:
     versions = Channel.empty().collect()
@@ -139,7 +138,7 @@ workflow SNP_SET_REFINEMENT {
     stitch_posfile.map {
         meta, stitch_posfile ->
         new_meta = meta.clone()
-        new_meta.iteration = 1
+        new_meta.iteration = 0
         [new_meta, stitch_posfile]
     }.set { stitch_posfile }
 
@@ -153,6 +152,7 @@ workflow SNP_SET_REFINEMENT {
         chr_list,
         filter_value_list,
         genotype_vcf,
+        ground_truth_vcf,
         versions,
     ).times ( niter )
 

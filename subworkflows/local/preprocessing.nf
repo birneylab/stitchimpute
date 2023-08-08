@@ -46,6 +46,7 @@ workflow PREPROCESSING {
 
     ground_truth
     .join( BCFTOOLS_INDEX_GROUND_TRUTH.out.csi )
+    .collect ()
     .set { ground_truth }
 
     // Gather versions of all tools used
