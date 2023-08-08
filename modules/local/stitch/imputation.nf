@@ -43,8 +43,9 @@ process STITCH_IMPUTATION {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def args   = task.ext.args   ?: ""
+    def prefix  = task.ext.prefix ?: "${meta.id}"
+    def args    = task.ext.args   ?: ""
+    def out_vcf = "${prefix}.vcf.gz"
     """
     touch ${out_vcf}
     mkdir plots

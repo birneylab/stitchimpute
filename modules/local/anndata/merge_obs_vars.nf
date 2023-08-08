@@ -34,7 +34,7 @@ process ANNDATA_MERGE_OBS_VARS {
     import os
     import sys
 
-    sys.path.append("${workflow.projectDir}/bin")
+    sys.path.append("${projectDir}/bin")
     from anndata_utilities import read_dask_anndata
 
     imputed_adata = read_dask_anndata("${adata_zarr_stitch}")
@@ -81,7 +81,7 @@ process ANNDATA_MERGE_OBS_VARS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args   = task.ext.args   ?: ""
     """
-    mkdir ${prefix}.anndata.zarr
+    mkdir ${prefix}.validation.anndata.zarr
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

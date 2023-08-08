@@ -26,6 +26,7 @@ workflow PREPROCESSING {
     .map { name, length, offset, linebases, linewidth -> name }
     .filter { name -> ! skip_chr.contains ( name ) }
     .collect ()
+    .ifEmpty ( ["stub_chr"] )
     .set { chr_list }
 
     reads

@@ -27,6 +27,8 @@ workflow POSTPROCESSING {
     versions.mix ( SCIKITALLEL_VCFTOZARR_GROUND_TRUTH.out.versions ).set { versions }
     versions.mix ( ANNDATA_LOAD_STITCH_VCF_ZARR.out.versions       ).set { versions }
     versions.mix ( ANNDATA_LOAD_GROUND_TRUTH_VCF_ZARR.out.versions ).set { versions }
+    versions.mix ( ANNDATA_MERGE_OBS_VARS.out.versions             ).set { versions }
+    versions.mix ( ANNDATA_CALCULATE_PEARSON_R.out.versions        ).set { versions }
 
     emit:
 

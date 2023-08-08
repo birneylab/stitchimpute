@@ -28,31 +28,28 @@ process ANNDATA_CALCULATE_PEARSON_R {
     import anndata as an
     import dask
     import dask.array as da
-    import dask.dataframe as dd
+    import pandas as pd
     import os
     import sys
 
-    sys.path.append("${workflow.projectDir}/bin")
+    sys.path.append("${projectDir}/bin")
     from anndata_utilities import read_dask_anndata
     from dask_utilities import slicewise_pearson_r
 
     adata = read_dask_anndata("${adata_zarr}")
+    df = adata.var
 
-    adata.varm["pearson_r"] = slicewise_pearson_r(
+    df["pearson_r"] = slicewise_pearson_r(
         Y_true = adata.layers["true_dosage"],
         Y_pred = adata.layers["dosage_${params.correlation_imputed_dosage_type}"],
         axis = 0,
     )
-
-    ddf = dd.from_dask_array(
-        da.stack([adata.varm["pearson_r"], adata.varm["info_score"]], axis = 1),
-        columns = ["pearson_r", "info_score"],
-    )
-
-    ddf.to_csv("${prefix}.performance.csv.gz", compression = "gzip")
+    df["info_score"] = adata.varm["info_score"]
+    df.to_csv("${prefix}.performance.csv.gz", index = False)
 
     ver_anndata = an.__version__
     ver_dask = dask.__version__
+    ver_pandas = pd.__version__
 
     os.system(
         "cat <<-END_VERSIONS > versions.yml\\n" +
@@ -60,6 +57,7 @@ process ANNDATA_CALCULATE_PEARSON_R {
         "   python: \$(python --version|cut -d' ' -f2)\\n" +
         f"   anndata: {ver_anndata}\\n" +
         f"   dask: {ver_dask}\\n" +
+        f"   pandas: {ver_pandas}\\n" +
         "END_VERSIONS"
     )
     """
@@ -68,13 +66,14 @@ process ANNDATA_CALCULATE_PEARSON_R {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args   = task.ext.args   ?: ""
     """
-    mkdir ${prefix}.anndata.zarr
+    touch ${prefix}.performance.csv.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version|cut -d' ' -f2)
         anndata: \$(python -c "import anndata\\nprint(anndata.__version__)")
         dask: \$(python -c "import dask\\nprint(dask.__version__)")
+        pandas: \$(python -c "import pandas\\nprint(pandas.__version__)")
     END_VERSIONS
     """
 }
