@@ -7,9 +7,10 @@ include { POSTPROCESSING                          } from '../../subworkflows/loc
 
 include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
 include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
+include { FILTER_POSITIONS                        } from '../../modules/local/filterpositions'
 
 //
 // Recursive subworkflow: takes only value channels
@@ -23,13 +24,19 @@ workflow RECURSIVE_ROUTINE {
     stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
     chr_list          // channel: [mandatory] list of chromosomes names
     filter_value_list // channel: [mandatory] list of filter values
-
     genotype_vcf      // channel: [mandatory] [ meta, vcf, vcf_index ]
     ground_truth_vcf  // channel: [optional]  [ meta, vcf, vcf_index ]
+    niter             // channel: [mandatory] total number of iterations
 
     versions          // channel: [mandatory] [ versions.yml ]
 
     main:
+    chr_list.first().map { it.size() }.set { nchr }
+    nchr
+    .combine ( niter.first() )
+    .flatMap { nchr, niter -> (1..nchr) * niter }
+    .set { counter }
+
     stitch_posfile
     .combine( filter_value_list.first() )
     .map {
@@ -37,6 +44,7 @@ workflow RECURSIVE_ROUTINE {
         def new_meta = meta.clone()
         new_meta.curr_filter_value = filter_value_list[meta.iteration]
         new_meta.iteration         = meta.iteration + 1
+        curr_iteration             = new_meta.iteration
         [new_meta, posfile]
     }
     .set { stitch_posfile }
@@ -58,6 +66,8 @@ workflow RECURSIVE_ROUTINE {
             [
                 "id"                   : "chromosome_${chromosome_name}",
                 "publish_dir_subfolder": "iteration_${meta.iteration}"  ,
+                "curr_filter_value"    : meta.curr_filter_value         ,
+                "iteration"            : meta.iteration                 ,
             ],
             positions,
             input,
@@ -73,15 +83,41 @@ workflow RECURSIVE_ROUTINE {
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
-    stitch_vcf
-    .join( BCFTOOLS_INDEX_STITCH.out.csi )
+    stitch_vcf.join( BCFTOOLS_INDEX_STITCH.out.csi )
     .map {
         meta, vcf, csi ->
         def new_meta = meta.clone()
         new_meta.id = "joint_stitch_output"
         [new_meta, vcf, csi]
     }
-    .groupTuple ()
+    .set { stitch_vcf }
+
+    stitch_vcf
+    .combine ( nchr )
+    .merge   ( counter )
+    // workaround since I cannot use groupTuple in recursion
+    .buffer { meta, vcf, csi, nchr, counter -> counter == nchr }
+    .map {
+        buf ->
+        def metas  = buf.collect { meta, vcf, csi, nchr, counter -> meta }.unique ()
+        def vcfs   = buf.collect { meta, vcf, csi, nchr, counter -> vcf  }.unique ()
+        def csis   = buf.collect { meta, vcf, csi, nchr, counter -> csi  }.unique ()
+        def nchrs  = buf.collect { meta, vcf, csi, nchr, counter -> nchr }.unique ()
+
+        assert metas.size() == 1
+        assert nchrs.size() == 1
+
+        def meta = metas[0]
+        def nchr = nchrs[0]
+
+        assert vcfs .size() == nchr
+        assert csis .size() == nchr
+
+
+        def ret = [meta, vcfs, csis]
+
+        return(ret)
+    }
     .set { collected_vcfs }
 
     BCFTOOLS_CONCAT ( collected_vcfs )
@@ -92,9 +128,18 @@ workflow RECURSIVE_ROUTINE {
     POSTPROCESSING( genotype_vcf, ground_truth_vcf.first() )
     POSTPROCESSING.out.performance.set { performance }
 
-    //
-    // filter code goes here
-    //
+    performance
+    .map {
+        meta, performance_csv ->
+        def new_meta = meta.clone()
+        new_meta.id = "stitch_posfile"
+        [new_meta, performance_csv, meta.curr_filter_value]
+    }
+    .set { performance }
+    FILTER_POSITIONS ( performance, "info_score" )
+    FILTER_POSITIONS.out.posfile.set { stitch_posfile_filtered }
+
+    stitch_posfile_filtered.view()
 
     versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
@@ -105,16 +150,16 @@ workflow RECURSIVE_ROUTINE {
     versions.mix ( POSTPROCESSING.out.versions        ).set { versions }
 
     emit:
-    collected_samples // channel: [ meta, collected_crams, collected_crais, cramlist ]
-    reference         // channel: [ meta, fasta, fasta_fai ]
-    stitch_posfile    // channel: [ meta, stitch_posfile ]
-    chr_list          // channel: list of chromosomes names
-    filter_value_list // channel: list of filter values
+    collected_samples       // channel: [ meta, collected_crams, collected_crais, cramlist ]
+    reference               // channel: [ meta, fasta, fasta_fai ]
+    stitch_posfile_filtered // channel: [ meta, stitch_posfile ]
+    chr_list                // channel: list of chromosomes names
+    filter_value_list       // channel: list of filter values
+    genotype_vcf            // channel: [ meta, vcf, vcf_index ]
+    ground_truth_vcf        // channel: [ meta, vcf, vcf_index ]
+    niter                   // channel: total number of iterations
 
-    genotype_vcf      // channel: [ meta, vcf, vcf_index ]
-    ground_truth_vcf  // channel: [ meta, vcf, vcf_index ]
-
-    versions          // channel: [ versions.yml ]
+    versions                // channel: [ versions.yml ]
 }
 
 //
@@ -153,10 +198,11 @@ workflow SNP_SET_REFINEMENT {
         filter_value_list,
         genotype_vcf,
         ground_truth_vcf,
+        niter,
         versions,
     ).times ( niter )
 
-    RECURSIVE_ROUTINE.out.genotype_vcf  .set { genotype_vcf   }
+    RECURSIVE_ROUTINE.out.genotype_vcf  .set { genotype_vcf }
 
     versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
 
