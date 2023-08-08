@@ -30,8 +30,8 @@ def checkPathParamList = [
 
 for (param in checkPathParamList) if (param) file(param, checkIfExists: true)
 
-fasta          = params.fasta          ? Channel.fromPath(params.fasta).collect()          : Channel.empty()
-stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).collect() : Channel.empty()
+fasta          = params.fasta          ? Channel.fromPath(params.fasta).first()          : Channel.empty()
+stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile).first() : Channel.empty()
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,8 +39,15 @@ stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ground_truth = params.ground_truth_vcf ? Channel.fromPath(params.ground_truth_vcf).collect() : Channel.empty()
-skip_chr     = params.skip_chr         ? params.skip_chr.split( "," )                        : []
+ground_truth        = params.ground_truth_vcf    ? Channel.fromPath(params.ground_truth_vcf).collect() : Channel.empty()
+skip_chr            = params.skip_chr            ? params.skip_chr.split( "," )                        : []
+downsample_coverage = params.downsample_coverage ?: Channel.empty()
+
+if ( params.downsample_coverage ) {
+    if ( ! "${downsample_coverage}".isNumber() ) {
+        error("The parameter \"downsample_coverage\" must be numeric or null.")
+    }
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,7 +160,7 @@ workflow STITCHIMPUTE {
     //
     stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
 
-    PREPROCESSING ( reads, fasta, skip_chr, ground_truth )
+    PREPROCESSING ( reads, fasta, skip_chr, ground_truth, downsample_coverage )
     PREPROCESSING.out.collected_samples.set { collected_samples }
     PREPROCESSING.out.reference        .set { reference         }
     PREPROCESSING.out.chr_list         .set { chr_list          }

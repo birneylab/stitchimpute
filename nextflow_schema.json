@@ -164,6 +164,11 @@
                     "help_text": "Accepted format are vcf, vcf.gz, and bcf. Sample names must be identical to the sample names in the SM tag of the cram indicated in the samplesheet. Used to calculate per-sample correlation with the imputation results. The file is re-formatted appropriately and given in input to STITCH with the --genfile flag.",
                     "format": "file-path"
                 },
+                "downsample_coverage": {
+                    "type": "string",
+                    "description": "To what average depth should the ground truth cram files be downsampled to?",
+                    "help_text": "To what average depth should the ground truth cram files be downsampled to? If not specidied no downsampling is done. Must be a numeric value."
+                },
                 "correlation_imputed_dosage_type": {
                     "type": "string",
                     "default": "soft",
@@ -173,7 +178,8 @@
                     "enum": [
                         "soft",
                         "hard"
-                    ]
+                    ],
+                    "hidden": true
                 }
             },
             "fa_icon": "fas fa-check"
