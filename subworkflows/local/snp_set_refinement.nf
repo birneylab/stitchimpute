@@ -218,7 +218,7 @@ workflow SNP_SET_REFINEMENT {
 // read a iteration-specific filter values to a list and return it with the total number
 // of iterations to perform
 def read_filter_values ( filepath ) {
-    snp_filtering_criteria = new File ( filepath )
+    def snp_filtering_criteria = new File ( filepath )
 
     if ( !snp_filtering_criteria.exists() ) {
         error("${params.snp_filtering_criteria} does not point to a valid file")
