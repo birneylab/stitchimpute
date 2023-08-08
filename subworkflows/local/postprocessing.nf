@@ -14,18 +14,22 @@ workflow POSTPROCESSING {
     versions = Channel.empty()
 
     SCIKITALLEL_VCFTOZARR ( genotype_vcf )
-    SCIKITALLEL_VCFTOZARR_GROUND_TRUTH ( ground_truth_vcf )
     ANNDATA_LOAD_STITCH_VCF_ZARR ( SCIKITALLEL_VCFTOZARR.out.zarr )
-    ANNDATA_LOAD_GROUND_TRUTH_VCF_ZARR ( SCIKITALLEL_VCFTOZARR_GROUND_TRUTH.out.zarr )
 
     if ( params.ground_truth_vcf ) {
+        SCIKITALLEL_VCFTOZARR_GROUND_TRUTH ( ground_truth_vcf )
+        ANNDATA_LOAD_GROUND_TRUTH_VCF_ZARR (
+            SCIKITALLEL_VCFTOZARR_GROUND_TRUTH.out.zarr
+        )
         ANNDATA_MERGE_OBS_VARS (
             ANNDATA_LOAD_STITCH_VCF_ZARR.out.zarr,
             ANNDATA_LOAD_GROUND_TRUTH_VCF_ZARR.out.zarr,
         )
         ANNDATA_GET_PERFORMANCE ( ANNDATA_MERGE_OBS_VARS.out.zarr )
 
-        versions.mix ( ANNDATA_MERGE_OBS_VARS.out.versions ).set { versions }
+        versions.mix ( SCIKITALLEL_VCFTOZARR_GROUND_TRUTH.out.versions ).set { versions }
+        versions.mix ( ANNDATA_LOAD_GROUND_TRUTH_VCF_ZARR.out.versions ).set { versions }
+        versions.mix ( ANNDATA_MERGE_OBS_VARS.out.versions             ).set { versions }
     } else {
         ANNDATA_GET_PERFORMANCE ( ANNDATA_LOAD_STITCH_VCF_ZARR.out.zarr )
     }
@@ -33,9 +37,7 @@ workflow POSTPROCESSING {
     ANNDATA_GET_PERFORMANCE.out.csv.set { performance }
 
     versions.mix ( SCIKITALLEL_VCFTOZARR.out.versions              ).set { versions }
-    versions.mix ( SCIKITALLEL_VCFTOZARR_GROUND_TRUTH.out.versions ).set { versions }
     versions.mix ( ANNDATA_LOAD_STITCH_VCF_ZARR.out.versions       ).set { versions }
-    versions.mix ( ANNDATA_LOAD_GROUND_TRUTH_VCF_ZARR.out.versions ).set { versions }
     versions.mix ( ANNDATA_GET_PERFORMANCE.out.versions            ).set { versions }
 
     emit:

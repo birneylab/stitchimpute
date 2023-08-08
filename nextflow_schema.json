@@ -178,6 +178,23 @@
             },
             "fa_icon": "fas fa-check"
         },
+        "new_group_1": {
+            "title": "New Group 1",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "filter_var": {
+                    "type": "string",
+                    "hidden": true,
+                    "enum": [
+                        "pearson_r",
+                        "info_score"
+                    ],
+                    "help_text": "Can be \"info_score\" or \"pearson_r\". By default, if this is not set \"pearson_r\" is used if ground_truth_vcf is set, \"info_score\" otherwise. If ground_truth_vcf is not defined this is ignored and \"info_score\" is used in any case."
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -392,6 +409,9 @@
         },
         {
             "$ref": "#/definitions/ground_truth"
+        },
+        {
+            "$ref": "#/definitions/new_group_1"
         },
         {
             "$ref": "#/definitions/institutional_config_options"

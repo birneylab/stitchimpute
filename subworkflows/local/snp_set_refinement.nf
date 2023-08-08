@@ -12,6 +12,10 @@ include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
 include { FILTER_POSITIONS                        } from '../../modules/local/filterpositions'
 
+// workflow-specific variables
+
+filter_var = params.ground_truth_vcf ? (params.filter_var ?: "pearson_r"): "info_score"
+
 //
 // Recursive subworkflow: takes only value channels
 //
@@ -136,10 +140,8 @@ workflow RECURSIVE_ROUTINE {
         [new_meta, performance_csv, meta.curr_filter_value]
     }
     .set { performance }
-    FILTER_POSITIONS ( performance, "info_score" )
+    FILTER_POSITIONS ( performance, filter_var )
     FILTER_POSITIONS.out.posfile.set { stitch_posfile_filtered }
-
-    stitch_posfile_filtered.view()
 
     versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
@@ -172,7 +174,7 @@ workflow SNP_SET_REFINEMENT {
     reference         // channel: [mandatory] [ meta, fasta, fasta_fai ]
     stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
     chr_list          // channel: [mandatory] list of chromosomes names
-    ground_truth_vcf  // channel: [mandatory] [ meta, vcf, vcf_index ]
+    ground_truth_vcf  // channel: [optional]  [ meta, vcf, vcf_index ]
 
     main:
     versions = Channel.empty().collect()
@@ -197,7 +199,7 @@ workflow SNP_SET_REFINEMENT {
         chr_list,
         filter_value_list,
         genotype_vcf,
-        ground_truth_vcf,
+        ground_truth_vcf.ifEmpty([]),
         niter,
         versions,
     ).times ( niter )
@@ -231,7 +233,7 @@ def read_filter_values ( filepath ) {
     def niter = filter_value_list.size()
 
     log.info(
-        "Running SNP set refinement with ${niter} iteration${niter > 1 ? "s" : ""} and using the following filter values: ${filter_value_list}"
+        "Running SNP set refinement with ${niter} iteration${niter > 1 ? "s" : ""} and using the following filter values: ${filter_value_list}. Filtering will be done on the ${filter_var} values."
     )
 
     return ( [filter_value_list, niter] )
