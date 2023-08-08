@@ -1,3 +1,5 @@
+// Extract performance metrics and evaluate group truth correlation
+
 include { SCIKITALLEL_VCFTOZARR                                       } from '../../modules/local/scikitallel/vcftozarr'
 include { SCIKITALLEL_VCFTOZARR as SCIKITALLEL_VCFTOZARR_GROUND_TRUTH } from '../../modules/local/scikitallel/vcftozarr'
 include { ANNDATA_LOAD_STITCH_VCF_ZARR                                } from '../../modules/local/anndata/load_stitch_vcf_zarr'

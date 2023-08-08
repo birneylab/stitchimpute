@@ -43,12 +43,6 @@ ground_truth        = params.ground_truth_vcf    ? Channel.fromPath(params.groun
 skip_chr            = params.skip_chr            ? params.skip_chr.split( "," )                        : []
 downsample_coverage = params.downsample_coverage ?: Channel.empty()
 
-if ( params.downsample_coverage ) {
-    if ( ! "${downsample_coverage}".isNumber() ) {
-        error("The parameter \"downsample_coverage\" must be numeric or null.")
-    }
-}
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Check conditionally mandatory parameters
@@ -128,6 +122,7 @@ include { IMPUTATION         } from '../subworkflows/local/imputation'
 include { GRID_SEARCH        } from '../subworkflows/local/grid_search'
 include { SNP_SET_REFINEMENT } from '../subworkflows/local/snp_set_refinement'
 include { POSTPROCESSING     } from '../subworkflows/local/postprocessing'
+include { PLOTTING           } from '../subworkflows/local/plotting'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,6 +177,8 @@ workflow STITCHIMPUTE {
 
             POSTPROCESSING ( genotype_vcf, ground_truth )
 
+            POSTPROCESSING.out.performance.set { performance }
+
             versions.mix ( IMPUTATION.out.versions     ).set { versions }
             versions.mix ( POSTPROCESSING.out.versions ).set { versions }
 
@@ -202,6 +199,8 @@ workflow STITCHIMPUTE {
 
             POSTPROCESSING ( genotype_vcf, ground_truth )
 
+            POSTPROCESSING.out.performance.set { performance }
+
             versions.mix ( GRID_SEARCH.out.versions    ).set { versions }
             versions.mix ( POSTPROCESSING.out.versions ).set { versions }
 
@@ -217,6 +216,7 @@ workflow STITCHIMPUTE {
                 collected_samples, reference, stitch_posfile, chr_list, ground_truth
             )
             SNP_SET_REFINEMENT.out.genotype_vcf.set { genotype_vcf }
+            SNP_SET_REFINEMENT.out.performance .set { performance }
 
             versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
@@ -224,9 +224,11 @@ workflow STITCHIMPUTE {
 
     }
 
+    PLOTTING ( performance )
 
     versions.mix ( INPUT_CHECK.out.versions    ).set { versions }
     versions.mix ( PREPROCESSING.out.versions  ).set { versions }
+    versions.mix ( PLOTTING.out.versions       ).set { versions }
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         versions.unique().collectFile(name: 'collated_versions.yml')

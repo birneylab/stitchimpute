@@ -165,7 +165,7 @@
                     "format": "file-path"
                 },
                 "downsample_coverage": {
-                    "type": "string",
+                    "type": "number",
                     "description": "To what average depth should the ground truth cram files be downsampled to?",
                     "help_text": "To what average depth should the ground truth cram files be downsampled to? If not specidied no downsampling is done. Must be a numeric value."
                 },
@@ -184,8 +184,8 @@
             },
             "fa_icon": "fas fa-check"
         },
-        "new_group_1": {
-            "title": "New Group 1",
+        "other_options": {
+            "title": "Other options",
             "type": "object",
             "description": "",
             "default": "",
@@ -417,7 +417,7 @@
             "$ref": "#/definitions/ground_truth"
         },
         {
-            "$ref": "#/definitions/new_group_1"
+            "$ref": "#/definitions/other_options"
         },
         {
             "$ref": "#/definitions/institutional_config_options"

@@ -29,8 +29,9 @@ workflow RECURSIVE_ROUTINE {
     chr_list          // channel: [mandatory] list of chromosomes names
     filter_value_list // channel: [mandatory] list of filter values
     genotype_vcf      // channel: [mandatory] [ meta, vcf, vcf_index ]
-    ground_truth_vcf  // channel: [optional]  [ meta, vcf, vcf_index ]
+    ground_truth_vcf  // channel: [mandatory] [ meta, vcf, vcf_index ]
     niter             // channel: [mandatory] total number of iterations
+    performance       // channel: [mandatory] [ meta, performance_csv ]
 
     versions          // channel: [mandatory] [ versions.yml ]
 
@@ -143,6 +144,10 @@ workflow RECURSIVE_ROUTINE {
     FILTER_POSITIONS ( performance, filter_var )
     FILTER_POSITIONS.out.posfile.set { stitch_posfile_filtered }
 
+    performance
+    .map { meta, performance_csv, filter_value -> [meta, performance_csv] }
+    .set { performance }
+
     versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
     versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
     versions.mix ( STITCH_IMPUTATION.out.versions     ).set { versions }
@@ -160,6 +165,7 @@ workflow RECURSIVE_ROUTINE {
     genotype_vcf            // channel: [ meta, vcf, vcf_index ]
     ground_truth_vcf        // channel: [ meta, vcf, vcf_index ]
     niter                   // channel: total number of iterations
+    performance             // channel: [ meta, performance_csv ]
 
     versions                // channel: [ versions.yml ]
 }
@@ -180,7 +186,8 @@ workflow SNP_SET_REFINEMENT {
     versions = Channel.empty().collect()
 
     // will collect the output of each recursion
-    genotype_vcf   = Channel.empty().collect()
+    genotype_vcf = Channel.empty().collect()
+    performance  = Channel.empty().collect()
 
     stitch_posfile.map {
         meta, stitch_posfile ->
@@ -201,15 +208,18 @@ workflow SNP_SET_REFINEMENT {
         genotype_vcf,
         ground_truth_vcf.ifEmpty([]),
         niter,
+        performance,
         versions,
     ).times ( niter )
 
-    RECURSIVE_ROUTINE.out.genotype_vcf  .set { genotype_vcf }
+    RECURSIVE_ROUTINE.out.genotype_vcf.set { genotype_vcf }
+    RECURSIVE_ROUTINE.out.performance .set { performance  }
 
     versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
 
     emit:
-    genotype_vcf // channel: [ meta, vcf, vcf_index ]
+    genotype_vcf // channel: [ meta, performance_csv ]
+    performance  // channel: [ meta, vcf, vcf_index ]
 
     versions     // channel: [ versions.yml ]
 }
