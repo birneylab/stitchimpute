@@ -3,11 +3,8 @@ process MAKE_PLOTS {
     tag "$meta.id"
     label 'process_single'
 
-    conda "conda-forge::r-tidyverse=2.0.0 conda-forge::r-cowplot=1.1.1"
-    // TODO: containers
-    //container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //    'https://depot.galaxyproject.org/singularity/r-stitch:1.6.8--r42h37595e4_0':
-    //    'biocontainers/r-data.table:1.12.2' }"
+    conda "conda-forge::r-base:4.3.1 conda-forge::r-tidyverse=2.0.0 conda-forge::r-cowplot=1.1.1"
+    container "saulpierotti-ebi/r_plotting:1.0"
 
     input:
     tuple val(meta), path(plotting_data)

@@ -5,10 +5,7 @@ process ANNDATA_LOAD_STITCH_VCF_ZARR {
     label 'process_high'
 
     conda "python=3.10.12 anndata=0.9.1 dask=2023.6.1 zarr=2.15.0 scikit-allel=1.3.6 bioconda::tabix=1.11"
-    // TODO: add containers
-    //container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //    'https://depot.galaxyproject.org/singularity/r-stitch:1.6.8--r42h37595e4_0':
-    //    'biocontainers/r-stitch:1.6.8--r42h37595e4_0' }"
+    container "saulpierotti-ebi/python_genomics:1.0"
 
     input:
     tuple val(meta), path(vcf_zarr)
