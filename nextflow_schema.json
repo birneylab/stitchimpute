@@ -180,6 +180,10 @@
                         "hard"
                     ],
                     "hidden": true
+                },
+                "random_seed": {
+                    "type": "integer",
+                    "description": "Random seed used for downsampling"
                 }
             },
             "fa_icon": "fas fa-check"

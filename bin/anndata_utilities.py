@@ -7,7 +7,8 @@ from anndata.experimental import read_dispatched, read_elem
 
 def read_dask_anndata(store: str):
     """
-    Read a zarr store as an AnnData object using dask arrays.
+    Read a zarr store as an AnnData object using dask arrays. The normal
+    adata.read_zarr method loads everything in memory.
 
     Adapted from
     https://anndata.readthedocs.io/en/latest/tutorials/notebooks/%7Bread%2Cwrite%7D_dispatched.html

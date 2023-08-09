@@ -3,7 +3,6 @@
 process GET_DOWNSAMPLE_FACTOR {
     tag "$meta.id"
     label 'process_single'
-    debug true
 
     conda "conda-forge::r-data.table=1.14.8  r-r.utils=2.12.2"
     // TODO: containers

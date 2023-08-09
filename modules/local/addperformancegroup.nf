@@ -29,9 +29,9 @@ process ADD_PERFORMANCE_GROUP {
     setDTthreads(${task.cpus})
 
     df <- fread("${performance_csv}", header = TRUE)
-    df[, group := ${group}]
+    df[, group := "${group}"]
 
-    fwrite(df, "${prefix}.addperformancegroup.csv")
+    fwrite(df, "${prefix}.addperformancegroup.csv.gz")
 
     ver_r <- strsplit(as.character(R.version["version.string"]), " ")[[1]][3]
     ver_datatable <- utils::packageVersion("data.table")
@@ -52,7 +52,7 @@ process ADD_PERFORMANCE_GROUP {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args   = task.ext.args   ?: ""
     """
-    touch ${prefix}.tsv
+    touch ${prefix}.addperformancegroup.csv.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

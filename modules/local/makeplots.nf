@@ -13,22 +13,24 @@ process MAKE_PLOTS {
     tuple val(meta), path(plotting_data)
 
     output:
-    tuple val(meta), path("*.pdf") , emit: posfile
+    tuple val(meta), path("*.pdf") , emit: plots
     path "versions.yml"            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix     = task.ext.prefix ?: "${meta.id}"
-    def args       = task.ext.args   ?: ""
+    def prefix        = task.ext.prefix ?: "${meta.id}"
+    def args          = task.ext.args   ?: ""
+    def plotting_data = "c(" + plotting_data.collect { "\"${it}\"" }.join(",") + ")"
     """
     #! /usr/bin/env Rscript
 
     library("tidyverse")
     library("cowplot")
 
-    df <- read_csv("${plotting_data}")
+    plotting_data_vec <- ${plotting_data}
+    df <- read_csv(plotting_data_vec)
 
     cdf_plot <- function(col, axis_name){
         if ( "group" %in% colnames(df) ) {
@@ -77,7 +79,7 @@ process MAKE_PLOTS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args   = task.ext.args   ?: ""
     """
-    touch ${prefix}.tsv
+    touch info_score_cumulative_density.pdf
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
