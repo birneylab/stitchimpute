@@ -54,7 +54,7 @@ process SCIKITALLEL_VCFTOZARR {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version|cut -d' ' -f2)
-        scikit-allel: \$(python -c "import allel\\nprint(allel.__version__)")
+        scikit-allel: \$(python -c "import allel; print(allel.__version__)")
     END_VERSIONS
     """
 }

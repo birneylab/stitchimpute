@@ -4,9 +4,10 @@
 """Provide functions to merge multiple versions.yml files."""
 
 
-import yaml
 import platform
 from textwrap import dedent
+
+import yaml
 
 
 def _make_versions_html(versions):
@@ -30,8 +31,10 @@ def _make_versions_html(versions):
             """
         )
     ]
+
     for process, tmp_versions in sorted(versions.items()):
         html.append("<tbody>")
+
         for i, (tool, version) in enumerate(sorted(tmp_versions.items())):
             html.append(
                 dedent(
@@ -58,10 +61,13 @@ def main():
     }
 
     with open("$versions") as f:
-        versions_by_process = yaml.load(f, Loader=yaml.BaseLoader) | versions_this_module
+        versions_by_process = (
+            yaml.load(f, Loader=yaml.BaseLoader) | versions_this_module
+        )
 
     # aggregate versions by the module name (derived from fully-qualified process name)
     versions_by_module = {}
+
     for process, process_versions in versions_by_process.items():
         module = process.split(":")[-1]
         try:

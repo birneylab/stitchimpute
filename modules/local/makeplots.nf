@@ -88,9 +88,9 @@ process MAKE_PLOTS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        r-base: \$(Rscript -e "strsplit(as.character(R.version['version.string']), ' ')[[1]][3]")
-        r-tidyverse: \$(Rscript -e "utils::packageVersion(\"tidyverse\")")
-        r-cowplot: \$(Rscript -e "utils::packageVersion(\"cowplot\")")
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-tidyverse: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"tidyverse\\")))")
+        r-cowplot: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"cowplot\\")))")
     END_VERSIONS
     """
 }

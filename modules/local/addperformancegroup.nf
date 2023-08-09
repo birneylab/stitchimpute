@@ -56,8 +56,8 @@ process ADD_PERFORMANCE_GROUP {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        r-base: \$(Rscript -e "strsplit(as.character(R.version['version.string']), ' ')[[1]][3]")
-        r-data.table: \$(Rscript -e "utils::packageVersion(\"data.table\")")
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-data.table: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"data.table\\")))")
     END_VERSIONS
     """
 }

@@ -61,11 +61,11 @@ process ANNDATA_GET_PERFORMANCE {
     os.system(
         "cat <<-END_VERSIONS > versions.yml\\n" +
         "\\"${task.process}\\":\\n" +
-        "   python: \$(python --version|cut -d' ' -f2)\\n" +
-        f"   anndata: {ver_anndata}\\n" +
-        f"   dask: {ver_dask}\\n" +
-        f"   pandas: {ver_pandas}\\n" +
-        f"   numpy: {ver_numpy}\\n" +
+        "    python: \$(python --version|cut -d' ' -f2)\\n" +
+        f"    anndata: {ver_anndata}\\n" +
+        f"    dask: {ver_dask}\\n" +
+        f"    pandas: {ver_pandas}\\n" +
+        f"    numpy: {ver_numpy}\\n" +
         "END_VERSIONS"
     )
     """
@@ -79,10 +79,10 @@ process ANNDATA_GET_PERFORMANCE {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version|cut -d' ' -f2)
-        anndata: \$(python -c "import anndata\\nprint(anndata.__version__)")
-        dask: \$(python -c "import dask\\nprint(dask.__version__)")
-        pandas: \$(python -c "import pandas\\nprint(pandas.__version__)")
-        numpy: \$(python -c "import numpy\\nprint(numpy.__version__)")
+        anndata: \$(python -c "import anndata; print(anndata.__version__)")
+        dask: \$(python -c "import dask; print(dask.__version__)")
+        pandas: \$(python -c "import pandas; print(pandas.__version__)")
+        numpy: \$(python -c "import numpy; print(numpy.__version__)")
     END_VERSIONS
     """
 }

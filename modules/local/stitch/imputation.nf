@@ -38,7 +38,8 @@ process STITCH_IMPUTATION {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")")
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
     END_VERSIONS
     """
 
@@ -52,7 +53,8 @@ process STITCH_IMPUTATION {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")")
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
     END_VERSIONS
     """
 }

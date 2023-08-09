@@ -22,7 +22,6 @@ process STITCH_GENERATEINPUTS {
     script:
     def args   = task.ext.args   ?: ""
     def prefix = task.ext.prefix ?: "${meta.id}"
-    // TODO: version does not work
     """
     STITCH.R \\
         --chr $chromosome_name \\
@@ -38,7 +37,8 @@ process STITCH_GENERATEINPUTS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")")
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
     END_VERSIONS
     """
 
@@ -49,7 +49,8 @@ process STITCH_GENERATEINPUTS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        stitch: \$(Rscript -e "utils::packageVersion(\"STITCH\")")
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
     END_VERSIONS
     """
 }
