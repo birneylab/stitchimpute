@@ -8,7 +8,7 @@ process STITCH_IMPUTATION {
         'biocontainers/r-stitch:1.6.8--r42h37595e4_0' }"
 
     input:
-    tuple val(meta ), path(posfile), path(input), path(RData), val(chromosome_name), val(K), val(nGen)
+    tuple val(meta), path(posfile), path(input), path(rdata, stageAs: "RData_in"), val(chromosome_name), val(K), val(nGen)
 
     output:
     tuple val(meta), path("*.vcf.gz")          , emit: vcf
@@ -24,6 +24,8 @@ process STITCH_IMPUTATION {
     def args        = task.ext.args   ?: ""
     def out_vcf     = "${prefix}.vcf.gz"
     """
+    cp -r ${rdata} RData
+
     STITCH.R \\
         --chr ${chromosome_name} \\
         --posfile <(grep "^${chromosome_name}\\t" ${posfile}) \\

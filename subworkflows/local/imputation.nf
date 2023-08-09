@@ -43,7 +43,7 @@ workflow IMPUTATION {
     }
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input )
+    STITCH_IMPUTATION( stitch_input.filter { it[0].id == "chromosome_14" } )
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
