@@ -72,5 +72,4 @@ workflow IMPUTATION {
     genotype_vcf // channel: [ meta, vcf, vcf_index ]
 
     versions     // channel: [ versions.yml ]
-
 }
