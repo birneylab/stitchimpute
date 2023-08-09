@@ -228,8 +228,6 @@ workflow STITCHIMPUTE {
 
     PLOTTING.out.plots.set { plots }
 
-    plots.view()
-
     versions.mix ( INPUT_CHECK.out.versions    ).set { versions }
     versions.mix ( PREPROCESSING.out.versions  ).set { versions }
     versions.mix ( PLOTTING.out.versions       ).set { versions }

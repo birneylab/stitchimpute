@@ -31,7 +31,9 @@ workflow PLOTTING {
                     break
             }
 
-            [ meta, performance_csv, group ]
+            def new_meta = ["id": "performance_${group}"]
+
+            [ new_meta, performance_csv, group ]
         }
         .set { performance }
 

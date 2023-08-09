@@ -49,7 +49,10 @@ workflow IMPUTATION {
 
     stitch_vcf
     .join( BCFTOOLS_INDEX_STITCH.out.csi )
-    .map { meta, vcf, csi -> [["id": "joint_stitch_output"], vcf, csi] }
+    .map {
+        meta, vcf, csi ->
+        [["id": "joint_stitch_output", "publish_dir_subfolder": ""], vcf, csi]
+    }
     .groupTuple ()
     .set { collected_vcfs }
 

@@ -32,11 +32,13 @@ process MAKE_PLOTS {
     plotting_data_vec <- ${plotting_data}
     df <- read_csv(plotting_data_vec)
 
-    cdf_plot <- function(col, axis_name){
+    cdf_plot <- function(col, axis_name, limits){
+        colq <- enquo(col)
+
         if ( "group" %in% colnames(df) ) {
-            p <- ggplot(df, aes_string(x = col, color = group))
+            p <- ggplot(df, aes(x = as.numeric(!!colq), color = group))
         } else {
-            p <- ggplot(df, aes_string(x = col))
+            p <- ggplot(df, aes(x = as.numeric(!!colq)))
         }
 
         if ( "${params.mode}" == "grid_search" ) {
@@ -45,17 +47,20 @@ process MAKE_PLOTS {
             p <- p + labs(color = "Iteration")
         }
 
-        p <- p + stat_ecdf(geom = "step") + theme_cowplot(18)
+        p <- p +
+            stat_ecdf(geom = "step") +
+            theme_cowplot(18) +
+            scale_x_continuous(limits = limits)
+
         sprintf("%s_cumulative_density.pdf", col) %>% ggsave(., p)
     }
 
-
-    cdf_plot("info_score", "STITCH info score")
+    cdf_plot("info_score", "STITCH info score", c(0, 1))
 
     if ( "pearson_r" %in% colnames(df) ){
-        cdf_plot("pearson_r", bquote(Pearson~r~"true vs imputed"))
+        cdf_plot("pearson_r", bquote(Pearson~r~"true vs imputed"), c(-1, 1))
         df["pearson_r2"] <- df["pearson_r"] ** 2
-        cdf_plot("pearson_r2", bquote(Pearson~r^2~"true vs imputed"))
+        cdf_plot("pearson_r2", bquote(Pearson~r^2~"true vs imputed"), c(0, 1))
     }
 
     ver_r <- strsplit(as.character(R.version["version.string"]), " ")[[1]][3]
