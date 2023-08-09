@@ -50,7 +50,8 @@ process MAKE_PLOTS {
         p <- p +
             stat_ecdf(geom = "step") +
             theme_cowplot(18) +
-            scale_x_continuous(limits = limits)
+            scale_x_continuous(limits = limits) +
+            xlab(axis_name)
 
         sprintf("%s_cumulative_density.pdf", col) %>% ggsave(., p)
     }
