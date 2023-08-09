@@ -24,25 +24,37 @@ process STITCH_IMPUTATION {
     def args        = task.ext.args   ?: ""
     def out_vcf     = "${prefix}.vcf.gz"
     """
-    cp -r ${rdata} RData
+    #!/usr/bin/env Rscript
 
-    STITCH.R \\
-        --chr ${chromosome_name} \\
-        --posfile <(grep "^${chromosome_name}\\t" ${posfile}) \\
-        --output_filename ${out_vcf} \\
-        --K ${K} \\
-        --nGen ${nGen} \\
-        --outputdir . \\
-        --nCores ${task.cpus} \\
-        --regenerateInput FALSE \\
-        --originalRegionName ${chromosome_name} \\
-        ${args}
+    library("STITCH")
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
-        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
-    END_VERSIONS
+    system("cp -r ${rdata} RData")
+
+    STITCH(
+        chr = "${chromosome_name}",
+        posfile = "${posfile}",
+        output_filename = "${out_vcf}",
+        K = ${K},
+        nGen = ${nGen},
+        outputdir = ".",
+        nCores = ${task.cpus},
+        regenerateInput = FALSE,
+        originalRegionName = "${chromosome_name}"${args}
+    )
+
+    ver_r <- strsplit(as.character(R.version["version.string"]), " ")[[1]][3]
+    ver_stitch <- utils::packageVersion("STITCH")
+
+    system(
+        paste(
+            "cat <<-END_VERSIONS > versions.yml",
+            "\\"${task.process}\\":",
+            sprintf("    r-base: %s", ver_r),
+            sprintf("    r-stitch: %s", ver_stitch),
+            "END_VERSIONS",
+            sep = "\\n"
+        )
+    )
     """
 
     stub:
@@ -52,6 +64,7 @@ process STITCH_IMPUTATION {
     """
     touch ${out_vcf}
     mkdir plots
+    mkdir RData
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

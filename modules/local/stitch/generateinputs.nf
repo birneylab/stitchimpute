@@ -1,3 +1,8 @@
+// generate input for STITCH. STITCH is an R package with a command line wrapper script that
+// howvere is not part of the conda/biocontainers package.
+// For this reason, I call it from within R.
+// Generating the input first avoids re-converting the crams to RData every time STITCH
+// is re-run.
 process STITCH_GENERATEINPUTS {
     tag "$meta.id"
     label 'process_high'
@@ -23,23 +28,35 @@ process STITCH_GENERATEINPUTS {
     def args   = task.ext.args   ?: ""
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    STITCH.R \\
-        --chr $chromosome_name \\
-        --posfile ${posfile} \\
-        --cramlist $cramlist \\
-        --reference $fasta \\
-        --outputdir . \\
-        --nCores $task.cpus \\
-        --generateInputOnly TRUE \\
-        --K 1 \\
-        --nGen 1 \\
-        $args
+    #!/usr/bin/env Rscript
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
-        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
-    END_VERSIONS
+    library("STITCH")
+
+    STITCH(
+        chr = "${chromosome_name}",
+        posfile = "${posfile}",
+        cramlist = "${cramlist}",
+        reference = "${fasta}",
+        outputdir = ".",
+        nCores = ${task.cpus},
+        generateInputOnly = TRUE,
+        K = 1,
+        nGen = 1${args}
+    )
+
+    ver_r <- strsplit(as.character(R.version["version.string"]), " ")[[1]][3]
+    ver_stitch <- utils::packageVersion("STITCH")
+
+    system(
+        paste(
+            "cat <<-END_VERSIONS > versions.yml",
+            "\\"${task.process}\\":",
+            sprintf("    r-base: %s", ver_r),
+            sprintf("    r-stitch: %s", ver_stitch),
+            "END_VERSIONS",
+            sep = "\\n"
+        )
+    )
     """
 
     stub:
