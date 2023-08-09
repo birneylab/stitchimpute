@@ -36,7 +36,7 @@ workflow IMPUTATION {
         [
             [
                 "id"                   : "chromosome_${chromosome_name}",
-                "publish_dir_subfolder": ""                             ,
+                "publish_dir_subfolder": ""                            ,
             ],
             positions, input, rdata, chromosome_name, K, nGen
         ]
