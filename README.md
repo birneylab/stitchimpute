@@ -36,9 +36,6 @@ It can also compare the imputation against some ground truth (high-coverage samp
    - Info score
    - Pearson $r$
    - Pearson $r^2$
-   - Coefficient of determination ($R^2$)
-   - Root Mean Square Error (RMSE)
-   - Mean Absolute Error (MAE)
 
 ## Usage
 
