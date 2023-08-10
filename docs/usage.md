@@ -18,50 +18,107 @@ You will need to create a samplesheet with information about the samples you wou
 
 ```bash
 --input '[path to samplesheet file]'
+
+sample,cram,crai
+SAMPLE1,AEG588A1_S1_L002_R1_001.cram,AEG588A1_S1_L002_R2_001.cram.crai
+SAMPLE2,AEG588A1_S1_L003_R1_002.cram,AEG588A1_S1_L003_R2_002.cram.crai
+SAMPLE3,AEG588A1_S1_L004_R1_003.cram,AEG588A1_S1_L004_R2_003.cram.crai
 ```
 
-### Multiple runs of the same sample
+## Ground truth
 
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
+If a ground truth is available, provide it as a VCF file with the `ground_truth_vcf` parameter. Note that sample names in the VCF must overlap with the sample names in the cram files for them to be matched correctly.
 
-```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
+In the samplesheet, add a column `high_cov` to specify which cram files are high coverage and should be downsampled before imputation. Set the desired sequencing depth after downsampling with the `downsample_coverage` parameter.
+
+`samplesheet.csv`:
+
+```csv
+sample,cram,crai,high_cov
+/path/to/sample1.cram,/path/to/sample1.cram.crai,true
+/path/to/sample2.cram,/path/to/sample2.cram.crai,false
 ```
 
-### Full samplesheet
+And then run the pipeline with:
 
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
-
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
-
-```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+```bash
+nextflow run birneylab/stitchimpute \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR> \
+   --ground_truth_vcf /path/to/ground_truth.vcf.gz \
+   --downsample_coverage 0.5
 ```
 
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
+Downsampling is done in order to have an accurate representation of the performance of the imputation for sample with a given coverage level. For this reason, it is suggested to set `downsample_coverage` to a value similar to the coverage of most samples in the analysis cohort.
 
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+## Pipeline modes
+
+This pipeline actually consist of three related pipelines, which can be selected with the `mode` parameter.
+
+### Imputation
+
+The imputation workflow is selected by setting the `mode` parameter to "imputation". This is the default setting if `mode` is not specified.
+The samples are imputed using STITCH with a specific set of parameters (`K` and `nGen` at least must be set, see the documentation of [STITCH](https://github.com/rwdavies/STITCH) for more details).
+
+### Parameter optimization
+
+The parameter optimization workflow is selected by setting the `mode` parameter to "grid_search".
+In this workflow `K` and `nGen` do not need to be specified.
+A set of combinations for the 2 parameters must be provided via the `grid_search_params` parameter.
+This should point to a csv file containing a column with header `K` and one with header `nGen`.
+Each row contains a combination of `K` and `nGen` which the pipeline will use for imputation.
+The imputation will be repeated with different parameters for as many times as there are non-header lines in the file specified.
+
+An example of `grid_search_params` file is the following:
+
+```
+K,nGen
+8,1
+8,2
+16,2
+32,2
+```
+
+### SNP set refinement
+
+The SNP set refinement workflow is selected by setting the `mode` parameter to "snp_set_refinement".
+In this mode `K` and `nGen` need to be supplied as in the "imputation" mode.
+In this mode a first imputation is done, and then the imputation performance is evaluated for each SNP internally by STITCH (info_score), or externally against a ground truth.
+A second imputation is then performed only using SNPs that satisfy a certain threshold for the imputation quality metric.
+Then a third imputation is performed and so on.
+This is the method suggested in the original STITCH paper for obtaining a reliable SNP set (https://www.nature.com/articles/ng.3594).
+
+The parameter `snp_filtering_criteria` must be set and point to a csv file with no header, and a single column.
+Each row should contain a threshold value that is used to filter out SNPs with a performance metric lower than the threshold.
+The metric considered is the info_score if `ground_truth_vcf` is not set, and the Pearson correlation otherwise.
+Which performance metric should be used can also be specified manually with the `filter_var` parameter.
+
+An example of `snp_filtering_criteria` file is the following:
+
+```
+0.8
+0.8
+0.9
+0.9
+```
+
+The number of filtering iterations performed is equal to the number of rows in the `snp_filtering_criteria` file.
+For each iteration, the filter value of the corresponding line is applied.
+
+## Birneylab-specific information
+
+For ease of use, the ideal settings for stitch for medaka samples have been specified in a profile called `medaka`.
+This can be activated with the flag `-profile medaka`.
+Always use this profile when working with medaka samples.
+For some caveats I cannot set a reference genome directly (medaka in Ensembl is compressed with gzip instead than bgzip) so you still need to provided a path to a valid reference using the `fasta` parameter.
 
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/stitchimpute --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+nextflow run birneylab/stitchimpute --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -84,7 +141,7 @@ Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <
 The above pipeline run specified with a params file in yaml format:
 
 ```bash
-nextflow run nf-core/stitchimpute -profile docker -params-file params.yaml
+nextflow run birneylab/stitchimpute -profile docker -params-file params.yaml
 ```
 
 with `params.yaml` containing:
@@ -96,23 +153,25 @@ genome: 'GRCh37'
 <...>
 ```
 
+<!--
 You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
+-->
 
 ### Updating the pipeline
 
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
-nextflow pull nf-core/stitchimpute
+nextflow pull birneylab/stitchimpute
 ```
 
 ### Reproducibility
 
 It is a good idea to specify a pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [nf-core/stitchimpute releases page](https://github.com/nf-core/stitchimpute/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
+First, go to the [birneylab/stitchimpute releases page](https://github.com/birneylab/stitchimpute/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
 
-This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
+This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future.
 
 To further assist in reproducbility, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
 

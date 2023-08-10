@@ -77,33 +77,6 @@ nextflow run birneylab/stitchimpute \
 > For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/stitchimpute/usage) and the [parameter documentation](https://nf-co.re/stitchimpute/parameters).
 -->
 
-## Ground truth
-
-If a ground truth is available, provide it as a VCF file with the `ground_truth_vcf` parameter. Note that sample names in the VCF must overlap with the sample names in the cram files for them to be matched correctly.
-
-In the samplesheet, add a column `high_cov` to specify which cram files are high coverage and should be downsampled before imputation. Set the desired sequencing depth after downsampling with the `downsample_coverage` parameter.
-
-`samplesheet.csv`:
-
-```csv
-sample,cram,crai,high_cov
-/path/to/sample1.cram,/path/to/sample1.cram.crai,true
-/path/to/sample2.cram,/path/to/sample2.cram.crai,false
-```
-
-And then run the pipeline with:
-
-```bash
-nextflow run birneylab/stitchimpute \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR> \
-   --ground_truth_vcf /path/to/ground_truth.vcf.gz \
-   --downsample_coverage 0.5
-```
-
-Downsampling is done in order to have an accurate representation of the performance of the imputation for sample with a given coverage level. For this reason, it is suggested to set `downsample_coverage` to a value similar to the coverage of most samples in the analysis cohort.
-
 ## Pipeline output
 
 <!--
