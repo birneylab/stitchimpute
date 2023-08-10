@@ -4,10 +4,7 @@ process FILTER_POSITIONS {
     label 'process_single'
 
     conda "conda-forge::r-data.table=1.14.8  r-r.utils=2.12.2"
-    // TODO: containers
-    //container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //    'https://depot.galaxyproject.org/singularity/r-stitch:1.6.8--r42h37595e4_0':
-    //    'biocontainers/r-data.table:1.12.2' }"
+    container "saulpierotti-ebi/r_datatable_tidyverse:0.1"
 
     input:
     tuple val(meta), path(performance_csv), val(performance_threshold)

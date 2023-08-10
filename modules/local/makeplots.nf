@@ -4,7 +4,7 @@ process MAKE_PLOTS {
     label 'process_single'
 
     conda "conda-forge::r-base:4.3.1 conda-forge::r-tidyverse=2.0.0 conda-forge::r-cowplot=1.1.1"
-    container "saulpierotti-ebi/r_plotting:1.0"
+    container "saulpierotti-ebi/r_plotting:0.1"
 
     input:
     tuple val(meta), path(plotting_data)

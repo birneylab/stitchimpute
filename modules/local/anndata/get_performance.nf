@@ -4,7 +4,7 @@ process ANNDATA_GET_PERFORMANCE {
     label 'process_high'
 
     conda "python=3.10.12 anndata=0.9.1 dask=2023.6.1 zarr=2.15.0 scikit-allel=1.3.6 bioconda::tabix=1.11"
-    container "saulpierotti-ebi/python_genomics:1.0"
+    container "saulpierotti-ebi/python_genomics:0.2"
 
     input:
     tuple val(meta), path(adata_zarr)
