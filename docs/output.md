@@ -62,6 +62,26 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 </details>
 
+### Performance
+
+Imputation performance per SNP according to different metrics. The summary file has the following columns:
+
+```
+chr,pos,ref,alt,info_score,pearson_r
+```
+
+The `pearson_r` column is present only if `ground_truth_vcf` is set.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `{group}/performance_summaries`
+  - `joint_stitch_output.performance.csv.gz`: CSV file containing the imputation performance results
+- `imputation_quality_plots`
+  - `*.pdf`: Plots produced in R with ggplot2 and cowplot showing the cumulative density of the different performance metrics, group by iteration/parameter combination in the respective workflows
+
+</details>
+
 ### Pipeline information
 
 <details markdown="1">
@@ -75,3 +95,12 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 </details>
 
 [Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
+
+## Note on anndata, scikit-allel, and zarr
+
+[Zarr](https://zarr.dev/) is a format for the storage of large multidimensional arrays.
+Combined with [Dask](https://www.dask.org/), zarr allows to operate on larger-than-memory matrices.
+[Anndata](https://anndata.readthedocs.io/en/latest/) is a Python package that provides an annotated data matrix. It can use zarr as a storage format and Dask for certain computations.
+Internally the pipeline uses [scikit-allel](https://scikit-allel.readthedocs.io/en/stable/) to convert VCF files to the zarr format, and then with a custom script it converts the scikit-allel output to an anndata object that is serialised to the zarr format. This enormously simplifies data manipulations and minimises the chance for errors.
+
+Since the zarr anndata objects are produced by the pipeline in any case, I also save them as outputs for further exploration and for interfacing with other pipelines (e.g. GWAS pipeline).
