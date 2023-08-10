@@ -10,13 +10,21 @@
 
 ## Pipeline tools
 
-- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [STITCH](https://github.com/rwdavies/STITCH)
 
-  > Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online]. Available online https://www.bioinformatics.babraham.ac.uk/projects/fastqc/.
+  > Davies, R., Flint, J., Myers, S. et al. Rapid genotype imputation from sequence without reference panels. Nat Genet 48, 965–969 (2016). https://doi.org/10.1038/ng.3594
 
-- [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
+- [Scikit-allel](https://scikit-allel.readthedocs.io/en/stable/)
 
-  > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+- [Anndata](https://anndata.readthedocs.io/en/latest/)
+
+- [Zarr](https://zarr.dev/)
+
+- [Dask](https://www.dask.org/)
+
+- [Samtools and Bcftools](http://www.htslib.org/)
+
+  > Danecek P, Bonfield JK, Liddle J, Marshall J, Ohan V, Pollard MO, Whitwham A, Keane T, McCarthy SA, Davies RM, Li H, Twelve years of SAMtools and BCFtools, GigaScience (2021) 10(2) giab008 [33590861]
 
 ## Software packaging/containerisation tools
 
