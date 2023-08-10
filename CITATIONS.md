@@ -1,4 +1,4 @@
-# nf-core/stitchimpute: Citations
+# birneylab/stitchimpute: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 
