@@ -27,6 +27,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 ### Ground truth
 
+Conversion of the ground truth to the anndata format and downsampling of high-coverage cram files
+
 <details markdown="1">
 <summary>Output files</summary>
 
@@ -38,6 +40,9 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 </details>
 
 ### Stitch
+
+Raw output from the STITCH imputation per chromosome.
+Read about [STITCH](https://github.com/rwdavies/STITCH) to know more about the various files produced.
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -51,6 +56,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 </details>
 
 ### Joint output
+
+Full-genome imputation output
 
 <details markdown="1">
 <summary>Output files</summary>
