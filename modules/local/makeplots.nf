@@ -3,7 +3,7 @@ process MAKE_PLOTS {
     tag "$meta.id"
     label 'process_single'
 
-    conda "r-base:4.3.1 r-tidyverse=2.0.0 r-cowplot=1.1.1"
+    conda "r-base=4.3.1 r-tidyverse=2.0.0 r-cowplot=1.1.1"
     container "saulpierotti-ebi/r_plotting:0.1"
 
     input:
