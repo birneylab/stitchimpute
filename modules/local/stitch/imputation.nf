@@ -1,11 +1,13 @@
+// STITCH is an R package with a command line wrapper script that
+// however is not part of the conda/biocontainers package. For this reason, I call it from within R.
+//
+// Run the imputation on pre-generated inputs
 process STITCH_IMPUTATION {
     tag "$meta.id"
     label 'process_high'
 
     conda "bioconda::r-stitch=1.6.8"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/r-stitch:1.6.8--r42h37595e4_0':
-        'biocontainers/r-stitch:1.6.8--r42h37595e4_0' }"
+    container "saulpierotti-ebi/r_stitch:1.6.10"
 
     input:
     tuple val(meta), path(posfile), path(input), path(rdata, stageAs: "RData_in"), val(chromosome_name), val(K), val(nGen)
@@ -28,7 +30,7 @@ process STITCH_IMPUTATION {
 
     library("STITCH")
 
-    system("cp -r ${rdata} RData")
+    system("rsync -rL ${rdata}/ RData")
 
     STITCH(
         chr = "${chromosome_name}",
