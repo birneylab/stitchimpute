@@ -15,26 +15,27 @@ process STITCH {
     output:
     tuple val(meta), path("input", type: "dir") , emit: input
     tuple val(meta), path("RData", type: "dir") , emit: rdata
-    tuple val(meta), path("plots", type: "dir") , emit: plots , optional: { generateinput }
-    tuple val(meta), path("*.vcf.gz")           , emit: vcf   , optional: { generateinput }
+    tuple val(meta), path("plots", type: "dir") , emit: plots , optional: { generate_input_only }
+    tuple val(meta), path("*.vcf.gz")           , emit: vcf   , optional: { generate_input_only }
     path "versions.yml"                         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args                        = task.ext.args   ?: ""
-    def prefix                      = task.ext.prefix ?: "${meta.id}"
-    def generateinput               = task.ext.args.contains( "--generateInputOnly TRUE" )
-    def onlyimpute                  = task.ext.args.contains( "--regenerateInput FALSE"  )
-    def conditionally_required_args = (
-        onlyimpute ?
-        "" :
-        "--cramlist ${cramlist} --reference ${fasta}"
-    )
-    def copy_rdata_commmand         = onlyimpute ? "rsync -rL ${rdata}/ RData" : ""
+    def prefix               = task.ext.prefix     ?: "${meta.id}"
+    def args                 = task.ext.args       ?: ""
+    def args2                = task.ext.args2      ?: ""
+    def generate_input_only  = args2.contains( "--generateInputOnly TRUE" )
+    def rsync_cmd            = rdata               ? "rsync -rL ${rdata}/ RData ${args}"                                             : ""
+    def cramlist_cmd         = cramlist            ? "--cramlist ${cramlist}"                                                        : ""
+    def reference_cmd        = fasta               ? "--reference ${fasta}"                                                          : ""
+    def regenerate_input_cmd = input && rdata      ? "--regenerateInput FALSE --originalRegionName ${chromosome_name}"               : ""
+    def generate_plots_cmd   = generate_input_only ? "mkdir plots"                                                                   : ""
+    def generate_vcf_cmd     = generate_input_only ? "touch ${prefix}.vcf.gz"                                                        : ""
+    def rsync_version_cmd    = rsync_cmd           ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
     """
-    ${copy_rdata_commmand}
+    ${rsync_cmd}
 
     STITCH.R \\
         --chr ${chromosome_name} \\
@@ -43,27 +44,40 @@ process STITCH {
         --nCores ${task.cpus} \\
         --K ${K} \\
         --nGen ${nGen} \\
-        ${conditionally_required_args} ${args}
+        ${cramlist_cmd} \\
+        ${reference_cmd} \\
+        ${regenerate_input_cmd} \\
+        ${args2}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
+        ${rsync_version_cmd}
         r-base: \$(Rscript -e "cat(strsplit(R.version[['version.string']], ' ')[[1]][3])")
         r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion('STITCH')))")
     END_VERSIONS
     """
 
     stub:
-    def prefix        = task.ext.prefix ?: "${meta.id}"
-    def args          = task.ext.args   ?: ""
-    def generateinput = task.ext.args.contains( "--generateInputOnly TRUE" )
+    def prefix               = task.ext.prefix     ?: "${meta.id}"
+    def args                 = task.ext.args       ?: ""
+    def args2                = task.ext.args2      ?: ""
+    def generate_input_only  = args2.contains( "--generateInputOnly TRUE" )
+    def rsync_cmd            = rdata               ? "rsync -rL ${rdata}/ RData ${args}"                                             : ""
+    def cramlist_cmd         = cramlist            ? "--cramlist ${cramlist}"                                                        : ""
+    def reference_cmd        = fasta               ? "--reference ${fasta}"                                                          : ""
+    def regenerate_input_cmd = input && rdata      ? "--regenerateInput FALSE --originalRegionName ${chromosome_name}"               : ""
+    def generate_plots_cmd   = generate_input_only ? "mkdir plots"                                                                   : ""
+    def generate_vcf_cmd     = generate_input_only ? "touch ${prefix}.vcf.gz"                                                        : ""
+    def rsync_version_cmd    = rsync_cmd           ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
     """
     mkdir input
     mkdir RData
-    ${generateinput ? "" : "mkdir plots"}
-    ${generateinput ? "" : "touch ${prefix}.vcf.gz"}
+    ${generate_plots_cmd}
+    ${generate_vcf_cmd}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
+        ${rsync_version_cmd}
         r-base: \$(Rscript -e "cat(strsplit(R.version[['version.string']], ' ')[[1]][3])")
         r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion('STITCH')))")
     END_VERSIONS
