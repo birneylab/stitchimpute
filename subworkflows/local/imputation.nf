@@ -3,11 +3,11 @@
 //
 
 include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
-include { STITCH as STITCH_GENERATEINPUTS         } from '../../modules/local/stitch/main.nf'
-include { STITCH as STITCH_IMPUTATION             } from '../../modules/local/stitch/main.nf'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
+include { STITCH as STITCH_GENERATEINPUTS         } from '../../modules/local/stitch'
+include { STITCH as STITCH_IMPUTATION             } from '../../modules/local/stitch'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
 
 
 workflow IMPUTATION {
@@ -50,7 +50,6 @@ workflow IMPUTATION {
             positions, input, rdata, chromosome_name, K, nGen
         ]
     }
-    .view()
     .set { stitch_input }
 
     STITCH_IMPUTATION( stitch_input, [null, [], [], []], [null, [], []] )

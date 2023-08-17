@@ -3,11 +3,11 @@
 //
 
 include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
-include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
-include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
-include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
+include { STITCH as STITCH_GENERATEINPUTS         } from '../../modules/local/stitch'
+include { STITCH as STITCH_IMPUTATION             } from '../../modules/local/stitch'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
 
 
 workflow GRID_SEARCH {
@@ -23,13 +23,22 @@ workflow GRID_SEARCH {
     SPLIT_POSFILE ( reference, stitch_posfile, chr_list )
     SPLIT_POSFILE.out.positions.set { positions }
 
-    STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
+    positions
+    .map{
+        meta, posfile, chromosome_name ->
+        [meta, posfile, [], [], chromosome_name, 1, 1]
+    }
+    .set { stitch_input }
+
+    STITCH_GENERATEINPUTS ( stitch_input, collected_samples, reference )
 
     Channel.fromPath ( params.grid_search_params )
     .splitCsv( header:true )
     .set { grid_search_params }
 
-    positions.join ( STITCH_GENERATEINPUTS.out.stitch_input )
+    positions
+    .join ( STITCH_GENERATEINPUTS.out.input )
+    .join ( STITCH_GENERATEINPUTS.out.rdata )
     .combine ( grid_search_params )
     .map {
         meta, positions, chromosome_name, input, rdata, grid_search_params ->
@@ -49,7 +58,7 @@ workflow GRID_SEARCH {
     }
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input )
+    STITCH_IMPUTATION( stitch_input, [null, [], [], []], [null, [], []] )
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
