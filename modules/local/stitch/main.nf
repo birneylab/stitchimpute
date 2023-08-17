@@ -26,16 +26,13 @@ process STITCH {
     def prefix               = task.ext.prefix     ?: "${meta.id}"
     def args                 = task.ext.args       ?: ""
     def args2                = task.ext.args2      ?: ""
-    def generate_input_only  = args2.contains( "--generateInputOnly TRUE" )
-    def rsync_cmd            = rdata               ? "rsync -rL ${rdata}/ RData ${args}"                                             : ""
-    def cramlist_cmd         = cramlist            ? "--cramlist ${cramlist}"                                                        : ""
-    def reference_cmd        = fasta               ? "--reference ${fasta}"                                                          : ""
-    def regenerate_input_cmd = input && rdata      ? "--regenerateInput FALSE --originalRegionName ${chromosome_name}"               : ""
-    def generate_plots_cmd   = generate_input_only ? "mkdir plots"                                                                   : ""
-    def generate_vcf_cmd     = generate_input_only ? "touch ${prefix}.vcf.gz"                                                        : ""
-    def rsync_version_cmd    = rsync_cmd           ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
+    def rsync_cmd            = rdata               ? "rsync -rL ${rdata}/ RData"                                       : ""
+    def cramlist_cmd         = cramlist            ? "--cramlist ${cramlist}"                                          : ""
+    def reference_cmd        = fasta               ? "--reference ${fasta}"                                            : ""
+    def regenerate_input_cmd = input && rdata      ? "--regenerateInput FALSE --originalRegionName ${chromosome_name}" : ""
+    def rsync_version_cmd    = rdata               ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
     """
-    ${rsync_cmd}
+    ${rsync_cmd} ${args}
 
     STITCH.R \\
         --chr ${chromosome_name} \\
@@ -58,17 +55,11 @@ process STITCH {
     """
 
     stub:
-    def prefix               = task.ext.prefix     ?: "${meta.id}"
-    def args                 = task.ext.args       ?: ""
-    def args2                = task.ext.args2      ?: ""
     def generate_input_only  = args2.contains( "--generateInputOnly TRUE" )
-    def rsync_cmd            = rdata               ? "rsync -rL ${rdata}/ RData ${args}"                                             : ""
-    def cramlist_cmd         = cramlist            ? "--cramlist ${cramlist}"                                                        : ""
-    def reference_cmd        = fasta               ? "--reference ${fasta}"                                                          : ""
-    def regenerate_input_cmd = input && rdata      ? "--regenerateInput FALSE --originalRegionName ${chromosome_name}"               : ""
-    def generate_plots_cmd   = generate_input_only ? "touch plots"                                                                   : ""
+    def prefix               = task.ext.prefix     ?: "${meta.id}"
+    def generate_plots_cmd   = generate_input_only ? "mkdir plots"                                                                   : ""
     def generate_vcf_cmd     = generate_input_only ? "touch ${prefix}.vcf.gz"                                                        : ""
-    def rsync_version_cmd    = rsync_cmd           ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
+    def rsync_version_cmd    = rdata               ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
     """
     touch input
     touch RData
