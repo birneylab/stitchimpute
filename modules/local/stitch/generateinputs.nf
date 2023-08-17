@@ -1,16 +1,11 @@
-// generate input for STITCH.
-//
-// STITCH is an R package with a command line wrapper script that
-// however is not part of the conda/biocontainers package. For this reason, I call it from within R.
-//
-// Generating the input first avoids re-converting the crams to RData every time STITCH
-// is re-run.
 process STITCH_GENERATEINPUTS {
     tag "$meta.id"
     label 'process_high'
 
-    conda "bioconda::r-stitch=1.6.8"
-    container "saulpierotti-ebi/r_stitch:1.6.10"
+    conda "bioconda::r-stitch=1.6.10"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/r-stitch:1.6.10--r43h06b5641_0':
+        'biocontainers/r-stitch:1.6.10--r43h06b5641_0' }"
 
     input:
     tuple val(meta) , path(posfile), val(chromosome_name)
