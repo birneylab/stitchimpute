@@ -3,8 +3,8 @@
 //
 
 include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
-include { STITCH_GENERATEINPUTS                   } from '../../modules/local/stitch/generateinputs'
-include { STITCH_IMPUTATION                       } from '../../modules/local/stitch/imputation'
+include { STITCH as STITCH_GENERATEINPUTS         } from '../../modules/local/stitch/main.nf'
+include { STITCH as STITCH_IMPUTATION             } from '../../modules/local/stitch/main.nf'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index/main'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat/main'
@@ -23,12 +23,21 @@ workflow IMPUTATION {
     SPLIT_POSFILE ( reference, stitch_posfile, chr_list )
     SPLIT_POSFILE.out.positions.set { positions }
 
-    STITCH_GENERATEINPUTS ( positions, collected_samples, reference )
+    positions
+    .map{
+        meta, posfile, chromosome_name ->
+        [meta, posfile, [], [], chromosome_name, 1, 1]
+    }
+    .set { stitch_input }
+
+    STITCH_GENERATEINPUTS ( stitch_input, collected_samples, reference )
 
     Channel.value ( params.stitch_K    ).set { stitch_K    }
     Channel.value ( params.stitch_nGen ).set { stitch_nGen }
 
-    positions.join ( STITCH_GENERATEINPUTS.out.stitch_input )
+    positions
+    .join ( STITCH_GENERATEINPUTS.out.input )
+    .join ( STITCH_GENERATEINPUTS.out.rdata )
     .combine ( stitch_K )
     .combine ( stitch_nGen )
     .map {
@@ -41,9 +50,10 @@ workflow IMPUTATION {
             positions, input, rdata, chromosome_name, K, nGen
         ]
     }
+    .view()
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input )
+    STITCH_IMPUTATION( stitch_input, collected_samples, reference )
     STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
