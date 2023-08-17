@@ -66,12 +66,12 @@ process STITCH {
     def cramlist_cmd         = cramlist            ? "--cramlist ${cramlist}"                                                        : ""
     def reference_cmd        = fasta               ? "--reference ${fasta}"                                                          : ""
     def regenerate_input_cmd = input && rdata      ? "--regenerateInput FALSE --originalRegionName ${chromosome_name}"               : ""
-    def generate_plots_cmd   = generate_input_only ? "mkdir plots"                                                                   : ""
+    def generate_plots_cmd   = generate_input_only ? "touch plots"                                                                   : ""
     def generate_vcf_cmd     = generate_input_only ? "touch ${prefix}.vcf.gz"                                                        : ""
     def rsync_version_cmd    = rsync_cmd           ? "rsync: \$(rsync --version | head -n1 | sed 's/^rsync  version //; s/ .*\$//')" : ""
     """
-    mkdir input
-    mkdir RData
+    touch input
+    touch RData
     ${generate_plots_cmd}
     ${generate_vcf_cmd}
 
