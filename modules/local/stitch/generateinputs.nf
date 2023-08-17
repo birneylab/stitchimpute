@@ -23,35 +23,23 @@ process STITCH_GENERATEINPUTS {
     def args   = task.ext.args   ?: ""
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    #!/usr/bin/env Rscript
+    STITCH.R \\
+        --chr ${chromosome_name} \\
+        --posfile ${posfile} \\
+        --cramlist ${cramlist} \\
+        --reference ${fasta} \\
+        --outputdir . \\
+        --nCores ${task.cpus} \\
+        --generateInputOnly TRUE \\
+        --K 1 \\
+        --nGen 1 \\
+        ${args}
 
-    library("STITCH")
-
-    STITCH(
-        chr = "${chromosome_name}",
-        posfile = "${posfile}",
-        cramlist = "${cramlist}",
-        reference = "${fasta}",
-        outputdir = ".",
-        nCores = ${task.cpus},
-        generateInputOnly = TRUE,
-        K = 1,
-        nGen = 1${args}
-    )
-
-    ver_r <- strsplit(as.character(R.version["version.string"]), " ")[[1]][3]
-    ver_stitch <- utils::packageVersion("STITCH")
-
-    system(
-        paste(
-            "cat <<-END_VERSIONS > versions.yml",
-            "\\"${task.process}\\":",
-            sprintf("    r-base: %s", ver_r),
-            sprintf("    r-stitch: %s", ver_stitch),
-            "END_VERSIONS",
-            sep = "\\n"
-        )
-    )
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        r-base: \$(Rscript -e "cat(strsplit(as.character(R.version[\\"version.string\\"]), \\" \\")[[1]][3])")
+        r-stitch: \$(Rscript -e "cat(as.character(utils::packageVersion(\\"STITCH\\")))")
+    END_VERSIONS
     """
 
     stub:
