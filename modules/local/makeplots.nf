@@ -30,12 +30,10 @@ process MAKE_PLOTS {
     df <- read_csv(plotting_data_vec)
 
     cdf_plot <- function(col, axis_name, limits){
-        colq <- enquo(col)
-
         if ( "group" %in% colnames(df) ) {
-            p <- ggplot(df, aes(x = as.numeric(!!colq), color = group))
+            p <- ggplot(df, aes(x = as.numeric(.data[[col]]), color = group))
         } else {
-            p <- ggplot(df, aes(x = as.numeric(!!colq)))
+            p <- ggplot(df, aes(x = as.numeric(.data[[col]])))
         }
 
         if ( "${params.mode}" == "grid_search" ) {
