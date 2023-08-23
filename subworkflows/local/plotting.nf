@@ -3,6 +3,8 @@
 include { ADD_PERFORMANCE_GROUP } from '../../modules/local/addperformancegroup'
 include { MAKE_PLOTS            } from '../../modules/local/makeplots'
 
+// local variables
+def plot_correlation = params.ground_truth_vcf ? "TRUE" : "FALSE"
 
 workflow PLOTTING {
     take:
@@ -50,7 +52,7 @@ workflow PLOTTING {
     .groupTuple ()
     .set { performance }
 
-    MAKE_PLOTS ( performance )
+    MAKE_PLOTS ( performance, plot_correlation )
     MAKE_PLOTS.out.plots
     .flatMap { meta, plots -> [[meta], plots].combinations() }
     .set { plots }

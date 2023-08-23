@@ -8,6 +8,7 @@ process MAKE_PLOTS {
 
     input:
     tuple val(meta), path(plotting_data)
+    val plot_correlation
 
     output:
     tuple val(meta), path("*.pdf") , emit: plots
@@ -17,9 +18,9 @@ process MAKE_PLOTS {
     task.ext.when == null || task.ext.when
 
     script:
-    def prefix        = task.ext.prefix ?: "${meta.id}"
-    def args          = task.ext.args   ?: ""
-    def plotting_data = "c(" + plotting_data.collect { "\"${it}\"" }.join(",") + ")"
+    def prefix           = task.ext.prefix ?: "${meta.id}"
+    def args             = task.ext.args   ?: ""
+    def plotting_data    = "c(" + plotting_data.collect { "\"${it}\"" }.join(",") + ")"
     """
     #! /usr/bin/env Rscript
 
@@ -53,7 +54,7 @@ process MAKE_PLOTS {
 
     cdf_plot("info_score", "STITCH info score", c(0, 1))
 
-    if ( "pearson_r" %in% colnames(df) ){
+    if ( $plot_correlation ){
         cdf_plot("pearson_r", bquote(Pearson~r~"true vs imputed"), c(-1, 1))
         df["pearson_r2"] <- df["pearson_r"] ** 2
         cdf_plot("pearson_r2", bquote(Pearson~r^2~"true vs imputed"), c(0, 1))
