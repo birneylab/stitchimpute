@@ -25,7 +25,7 @@ workflow SPLIT_POSFILE {
 
     SEPARATEPOSITIONSBYCHR( positions_to_split )
     SEPARATEPOSITIONSBYCHR.out.positions
-    .join ( positions_to_split )
+    .join ( positions_to_split, failOnMismatch: true, failOnDuplicate: true )
     .map {
         meta, positions_chr, stitch_posfile, chromosome_name ->
         [meta, positions_chr, chromosome_name]

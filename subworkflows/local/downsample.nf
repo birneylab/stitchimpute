@@ -26,7 +26,7 @@ workflow DOWNSAMPLE {
     GET_DOWNSAMPLE_FACTOR( SAMTOOLS_COVERAGE.out.coverage, downsample_coverage, skip_chr )
     GET_DOWNSAMPLE_FACTOR.out.downsample_factor
     .splitText( elem: 1 ) { meta, downsample_factor -> [meta, downsample_factor.trim()] }
-    .join ( reads.high_cov )
+    .join ( reads.high_cov, failOnMismatch: true, failOnDuplicate: true )
     .map {
         meta, downsample_factor, cram, crai ->
         new_meta = meta.clone()
@@ -39,7 +39,7 @@ workflow DOWNSAMPLE {
     SAMTOOLS_DOWNSAMPLE ( reads_to_downsample, [["id": null], []], [] )
     SAMTOOLS_INDEX ( SAMTOOLS_DOWNSAMPLE.out.cram )
     SAMTOOLS_DOWNSAMPLE.out.cram
-    .join ( SAMTOOLS_INDEX.out.crai )
+    .join ( SAMTOOLS_INDEX.out.crai, failOnMismatch: true, failOnDuplicate: true )
     .set { downsampled_reads }
 
     reads.low_cov.mix ( downsampled_reads ).set { reads }

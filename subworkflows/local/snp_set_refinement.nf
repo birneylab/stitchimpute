@@ -4,8 +4,7 @@
 
 include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
 include { POSTPROCESSING                          } from '../../subworkflows/local/postprocessing'
-include { STITCH as STITCH_GENERATEINPUTS         } from '../../modules/local/stitch'
-include { STITCH as STITCH_IMPUTATION             } from '../../modules/local/stitch'
+include { STITCH_TWO_STEP_IMPUTE                  } from '../../subworkflows/local/stitch_two_step_impute'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
@@ -13,7 +12,8 @@ include { FILTER_POSITIONS                        } from '../../modules/local/fi
 
 // workflow-specific variables
 
-filter_var = params.ground_truth_vcf ? (params.filter_var ?: "pearson_r"): "info_score"
+filter_var  = params.ground_truth_vcf ? (params.filter_var ?: "pearson_r"): "info_score" // neds to be global for use in read_filter_values
+def random_seed = params.random_seed ?: []
 
 //
 // Recursive subworkflow: takes only value channels
@@ -60,21 +60,8 @@ workflow RECURSIVE_ROUTINE {
     SPLIT_POSFILE.out.positions.set { positions }
 
     positions
-    .map{
-        meta, posfile, chromosome_name ->
-        [meta, posfile, [], [], chromosome_name, 1, 1]
-    }
-    .set { stitch_input }
-
-    STITCH_GENERATEINPUTS ( stitch_input, collected_samples.first(), reference.first() )
-
-    positions
-    .join ( STITCH_GENERATEINPUTS.out.input )
-    .join ( STITCH_GENERATEINPUTS.out.rdata )
-    .combine ( stitch_K )
-    .combine ( stitch_nGen )
     .map {
-        meta, positions, chromosome_name, input, rdata, K, nGen ->
+        meta, positions, chromosome_name ->
         [
             [
                 "id"                   : "chromosome_${chromosome_name}",
@@ -82,21 +69,20 @@ workflow RECURSIVE_ROUTINE {
                 "curr_filter_value"    : meta.curr_filter_value         ,
                 "iteration"            : meta.iteration                 ,
             ],
-            positions,
-            input,
-            rdata,
-            chromosome_name,
-            K,
-            nGen,
+            positions, chromosome_name
         ]
     }
+    .combine ( stitch_K )
+    .combine ( stitch_nGen )
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input, [null, [], [], []], [null, [], []] )
-    STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
+
+    STITCH_TWO_STEP_IMPUTE ( stitch_input, collected_samples.first(), reference.first(), random_seed )
+    STITCH_TWO_STEP_IMPUTE.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
-    stitch_vcf.join( BCFTOOLS_INDEX_STITCH.out.csi )
+    stitch_vcf
+    .join( BCFTOOLS_INDEX_STITCH.out.csi, failOnMismatch: true, failOnDuplicate: true )
     .map {
         meta, vcf, csi ->
         def new_meta = meta.clone()
@@ -136,7 +122,9 @@ workflow RECURSIVE_ROUTINE {
     BCFTOOLS_CONCAT ( collected_vcfs )
     BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
-    genotype_vcf.join ( BCFTOOLS_INDEX_JOINT.out.csi ).set { genotype_vcf }
+    genotype_vcf
+    .join ( BCFTOOLS_INDEX_JOINT.out.csi, failOnMismatch: true, failOnDuplicate: true )
+    .set { genotype_vcf }
 
     POSTPROCESSING( genotype_vcf, ground_truth_vcf.first() )
     POSTPROCESSING.out.performance.set { performance }
@@ -156,13 +144,12 @@ workflow RECURSIVE_ROUTINE {
     .map { meta, performance_csv, filter_value -> [meta, performance_csv] }
     .set { performance }
 
-    versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
-    versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
-    versions.mix ( STITCH_IMPUTATION.out.versions     ).set { versions }
-    versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ).set { versions }
-    versions.mix ( BCFTOOLS_CONCAT.out.versions       ).set { versions }
-    versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
-    versions.mix ( POSTPROCESSING.out.versions        ).set { versions }
+    versions.mix ( SPLIT_POSFILE.out.versions          ) .set { versions }
+    versions.mix ( STITCH_TWO_STEP_IMPUTE.out.versions ) .set { versions }
+    versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions  ) .set { versions }
+    versions.mix ( BCFTOOLS_CONCAT.out.versions        ) .set { versions }
+    versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions   ) .set { versions }
+    versions.mix ( POSTPROCESSING.out.versions         ) .set { versions }
 
     emit:
     collected_samples       // channel: [ meta, collected_crams, collected_crais, cramlist ]

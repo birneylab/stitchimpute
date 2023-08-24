@@ -23,7 +23,7 @@ workflow PREPROCESSING {
     SAMTOOLS_FAIDX ( fasta, [['id':null], []] )
 
     fasta
-    .join ( SAMTOOLS_FAIDX.out.fai )
+    .join ( SAMTOOLS_FAIDX.out.fai, failOnMismatch: true, failOnDuplicate: true )
     .first ()
     .set { reference }
 

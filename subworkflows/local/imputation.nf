@@ -3,12 +3,12 @@
 //
 
 include { SPLIT_POSFILE                           } from '../../subworkflows/local/split_stitch_posfile'
-include { STITCH as STITCH_GENERATEINPUTS         } from '../../modules/local/stitch'
-include { STITCH as STITCH_IMPUTATION             } from '../../modules/local/stitch'
+include { STITCH_TWO_STEP_IMPUTE                  } from '../../subworkflows/local/stitch_two_step_impute'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
 
+def random_seed = params.random_seed ?: []
 
 workflow IMPUTATION {
     take:
@@ -23,41 +23,30 @@ workflow IMPUTATION {
     SPLIT_POSFILE ( reference, stitch_posfile, chr_list )
     SPLIT_POSFILE.out.positions.set { positions }
 
-    positions
-    .map{
-        meta, posfile, chromosome_name ->
-        [meta, posfile, [], [], chromosome_name, 1, 1]
-    }
-    .set { stitch_input }
-
-    STITCH_GENERATEINPUTS ( stitch_input, collected_samples, reference )
-
     Channel.value ( params.stitch_K    ).set { stitch_K    }
     Channel.value ( params.stitch_nGen ).set { stitch_nGen }
 
     positions
-    .join ( STITCH_GENERATEINPUTS.out.input )
-    .join ( STITCH_GENERATEINPUTS.out.rdata )
-    .combine ( stitch_K )
-    .combine ( stitch_nGen )
     .map {
-        meta, positions, chromosome_name, input, rdata, K, nGen ->
+        meta, positions, chromosome_name ->
         [
             [
                 "id"                   : "chromosome_${chromosome_name}",
                 "publish_dir_subfolder": ""                            ,
             ],
-            positions, input, rdata, chromosome_name, K, nGen
+            positions, chromosome_name
         ]
     }
+    .combine ( stitch_K )
+    .combine ( stitch_nGen )
     .set { stitch_input }
 
-    STITCH_IMPUTATION( stitch_input, [null, [], [], []], [null, [], []] )
-    STITCH_IMPUTATION.out.vcf.set { stitch_vcf }
+    STITCH_TWO_STEP_IMPUTE ( stitch_input, collected_samples, reference, random_seed )
+    STITCH_TWO_STEP_IMPUTE.out.vcf.set { stitch_vcf }
     BCFTOOLS_INDEX_STITCH ( stitch_vcf )
 
     stitch_vcf
-    .join( BCFTOOLS_INDEX_STITCH.out.csi )
+    .join( BCFTOOLS_INDEX_STITCH.out.csi, failOnMismatch: true, failOnDuplicate: true )
     .map {
         meta, vcf, csi ->
         [["id": "joint_stitch_output", "publish_dir_subfolder": ""], vcf, csi]
@@ -68,14 +57,15 @@ workflow IMPUTATION {
     BCFTOOLS_CONCAT ( collected_vcfs )
     BCFTOOLS_CONCAT.out.vcf.set { genotype_vcf }
     BCFTOOLS_INDEX_JOINT( genotype_vcf )
-    genotype_vcf.join ( BCFTOOLS_INDEX_JOINT.out.csi ).set { genotype_vcf }
+    genotype_vcf
+    .join ( BCFTOOLS_INDEX_JOINT.out.csi, failOnMismatch: true, failOnDuplicate: true )
+    .set { genotype_vcf }
 
-    versions.mix ( SPLIT_POSFILE.out.versions         ).set { versions }
-    versions.mix ( STITCH_GENERATEINPUTS.out.versions ).set { versions }
-    versions.mix ( STITCH_IMPUTATION.out.versions     ).set { versions }
-    versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions ).set { versions }
-    versions.mix ( BCFTOOLS_CONCAT.out.versions       ).set { versions }
-    versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions  ).set { versions }
+    versions.mix ( SPLIT_POSFILE.out.versions          ).set { versions }
+    versions.mix ( STITCH_TWO_STEP_IMPUTE.out.versions ).set { versions }
+    versions.mix ( BCFTOOLS_INDEX_STITCH.out.versions  ).set { versions }
+    versions.mix ( BCFTOOLS_CONCAT.out.versions        ).set { versions }
+    versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions   ).set { versions }
 
     emit:
     genotype_vcf // channel: [ meta, vcf, vcf_index ]
