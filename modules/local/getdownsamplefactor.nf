@@ -36,8 +36,6 @@ process GET_DOWNSAMPLE_FACTOR {
     original_depth <- df[, sum(meandepth * region_length) / sum(region_length)]
     downsampling_factor <- ${desired_depth} / original_depth
 
-    stopifnot(downsampling_factor < 1)
-
     fwrite(
         data.table(downsampling_factor),
         "${prefix}.downsampling_factor.txt",

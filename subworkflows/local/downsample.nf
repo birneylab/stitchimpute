@@ -30,19 +30,27 @@ workflow DOWNSAMPLE {
     .map {
         meta, downsample_factor, cram, crai ->
         new_meta = meta.clone()
-        new_meta.downsample_factor = downsample_factor
+        new_meta.downsample_factor = downsample_factor as Float
         new_meta.id = meta.id + ".downsample"
         [new_meta, cram, crai]
     }
+    .branch {
+        meta, cram, crai ->
+        already_downsampled: meta.downsample_factor as Float >= 1
+        others: meta.downsample_factor as Float < 1
+    }
     .set { reads_to_downsample }
 
-    SAMTOOLS_DOWNSAMPLE ( reads_to_downsample, [["id": null], []], [] )
+    SAMTOOLS_DOWNSAMPLE ( reads_to_downsample.others, [["id": null], []], [] )
     SAMTOOLS_INDEX ( SAMTOOLS_DOWNSAMPLE.out.cram )
     SAMTOOLS_DOWNSAMPLE.out.cram
     .join ( SAMTOOLS_INDEX.out.crai, failOnMismatch: true, failOnDuplicate: true )
     .set { downsampled_reads }
 
-    reads.low_cov.mix ( downsampled_reads ).set { reads }
+    reads.low_cov
+    .mix ( downsampled_reads )
+    .mix ( reads_to_downsample.already_downsampled )
+    .set { reads }
 
     // Gather versions of all tools used
     versions.mix ( SAMTOOLS_COVERAGE.out.versions     ) .set { versions }
