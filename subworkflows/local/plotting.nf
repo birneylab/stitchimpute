@@ -1,66 +1,38 @@
-// Plot the aggregated imputation performance
-
-include { ADD_PERFORMANCE_GROUP } from '../../modules/local/addperformancegroup'
-include { MAKE_PLOTS            } from '../../modules/local/makeplots'
-
-// local variables
-def plot_correlation = params.ground_truth_vcf ? "TRUE" : "FALSE"
+include { PLOT_INFO_SCORE } from '../../modules/local/makeplots'
+include { PLOT_R2_SITES   } from '../../modules/local/makeplots'
+include { PLOT_R2_SAMPLES } from '../../modules/local/makeplots'
+include { PLOT_R2_MAF     } from '../../modules/local/makeplots'
 
 workflow PLOTTING {
     take:
-    performance // channel: [mandatory] [ meta, performance_csv ]
+    info_score // channel: [mandatory] [ meta, info_score ]
+    rsquare    // channel: [optional ] [ meta, r2_per_site, r2_samples, r2_groups ]
 
     main:
     versions = Channel.empty()
+    plots    = Channel.empty()
 
-    if ( params.mode != "imputation" ) {
-        performance.map {
-            meta, performance_csv ->
+    rsquare.map { meta, r2_sites, r2_samples, r2_groups -> [ meta, r2_sites   ] }.set { r2_sites   }
+    rsquare.map { meta, r2_sites, r2_samples, r2_groups -> [ meta, r2_samples ] }.set { r2_samples }
+    rsquare.map { meta, r2_sites, r2_samples, r2_groups -> [ meta, r2_groups  ] }.set { r2_groups  }
 
-            def String group = null
+    PLOT_INFO_SCORE ( info_score )
+    PLOT_R2_SITES   ( r2_sites   )
+    PLOT_R2_SAMPLES ( r2_samples )
+    PLOT_R2_MAF     ( r2_groups  )
 
-            switch ( params.mode ) {
-                case "grid_search":
-                    group = meta.params_comb
-                    .collect { k, v -> "${k}_${v}" }
-                    .join ( "_" )
+    plots.mix ( PLOT_INFO_SCORE.out.plots ).set { plots }
+    plots.mix ( PLOT_R2_SITES.out  .plots ).set { plots }
+    plots.mix ( PLOT_R2_SAMPLES.out.plots ).set { plots }
+    plots.mix ( PLOT_R2_MAF.out    .plots ).set { plots }
 
-                    break
-
-                case "snp_set_refinement":
-                    group = meta.iteration
-
-                    break
-            }
-
-            def new_meta = ["id": "performance_${group}"]
-
-            [ new_meta, performance_csv, group ]
-        }
-        .set { performance }
-
-        ADD_PERFORMANCE_GROUP ( performance )
-        ADD_PERFORMANCE_GROUP.out.performance.set { performance }
-
-        versions.mix ( ADD_PERFORMANCE_GROUP.out.versions ).set { versions }
-    }
-
-    performance
-    .map {
-        meta, performance_csv -> [["id": "collected_performance"], performance_csv]
-    }
-    .groupTuple ()
-    .set { performance }
-
-    MAKE_PLOTS ( performance, plot_correlation )
-    MAKE_PLOTS.out.plots
-    .flatMap { meta, plots -> [[meta], plots].combinations() }
-    .set { plots }
-
-    versions.mix ( MAKE_PLOTS.out.versions ).set { versions }
+    versions.mix ( PLOT_INFO_SCORE.out.versions ).set { versions }
+    versions.mix ( PLOT_R2_SITES  .out.versions ).set { versions }
+    versions.mix ( PLOT_R2_SAMPLES.out.versions ).set { versions }
+    versions.mix ( PLOT_R2_MAF    .out.versions ).set { versions }
 
     emit:
-    plots    // channel: [ pdf_plots ]
+    plots    // channel: [ meta, plot ]
 
     versions // channel: [ versions.yml ]
 }

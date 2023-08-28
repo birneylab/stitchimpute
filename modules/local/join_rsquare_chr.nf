@@ -1,4 +1,4 @@
-process ADD_PERFORMANCE_GROUP {
+process JOIN_RSQUARE_CHR {
     tag "$meta.id"
     label 'process_single'
 
@@ -6,10 +6,10 @@ process ADD_PERFORMANCE_GROUP {
     container "saulpierotti-ebi/r_datatable_tidyverse:0.1"
 
     input:
-    tuple val(meta), path(performance_csv), val(group)
+    tuple val(meta), path(rsquare_per_site)
 
     output:
-    tuple val(meta), path("*.csv.gz"), emit: performance
+    tuple val(meta), path("*.tsv.gz"), emit: rsquare_per_site
     path "versions.yml"              , emit: versions
 
     when:
@@ -25,10 +25,11 @@ process ADD_PERFORMANCE_GROUP {
 
     setDTthreads(${task.cpus})
 
-    df <- fread("${performance_csv}", header = TRUE)
-    df[, group := "${group}"]
+    l_names <- list.files(pattern = "*.txt.gz")
+    l_df <- lapply(l_names, fread, header = TRUE, sep = '\t')
+    df <- rbindlist(l_df)
 
-    fwrite(df, "${prefix}.addperformancegroup.csv.gz")
+    fwrite(df, "${prefix}.tsv.gz", sep = '\t')
 
     ver_r <- strsplit(as.character(R.version["version.string"]), " ")[[1]][3]
     ver_datatable <- utils::packageVersion("data.table")
@@ -49,7 +50,7 @@ process ADD_PERFORMANCE_GROUP {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args   = task.ext.args   ?: ""
     """
-    touch ${prefix}.addperformancegroup.csv.gz
+    touch ${prefix}.csv.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

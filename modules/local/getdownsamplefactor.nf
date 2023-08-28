@@ -61,7 +61,7 @@ process GET_DOWNSAMPLE_FACTOR {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def args   = task.ext.args   ?: ""
     """
-    touch ${prefix}.downsampling_factor.txt
+    echo "1" > ${prefix}.downsampling_factor.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
