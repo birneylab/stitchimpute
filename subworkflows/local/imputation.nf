@@ -23,6 +23,7 @@ workflow IMPUTATION {
     SPLIT_POSFILE ( reference, stitch_posfile, chr_list )
     SPLIT_POSFILE.out.positions.set { positions }
 
+
     Channel.value ( params.stitch_K    ).set { stitch_K    }
     Channel.value ( params.stitch_nGen ).set { stitch_nGen }
 

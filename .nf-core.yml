@@ -15,6 +15,10 @@ lint:
     - assets/test_data/cram/test_sample1.cram
   multiqc_config:
     - assets/multiqc_config.yml
-  file_exists:
+  files_exist:
     - assets/multiqc_config.yml
+    - .github/workflows/branch.yml
+    - .github/workflows/ci.yml
+    - .github/workflows/linting_comment.yml
+    - .github/workflows/linting.yml
 

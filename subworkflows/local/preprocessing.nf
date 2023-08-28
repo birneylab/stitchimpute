@@ -4,9 +4,9 @@
 //
 
 include { DOWNSAMPLE                                    } from '../../subworkflows/local/downsample'
-
 include { SAMTOOLS_FAIDX                                } from '../../modules/nf-core/samtools/faidx'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_GROUND_TRUTH } from '../../modules/nf-core/bcftools/index'
+include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_FREQ_VCF     } from '../../modules/nf-core/bcftools/index'
 
 workflow PREPROCESSING {
     take:
@@ -14,6 +14,7 @@ workflow PREPROCESSING {
     fasta               // channel: [mandatory] [ fasta ]
     skip_chr            // channel: [mandatory] list of chromosomes to skip
     ground_truth        // channel: [optional]  [ vcf_file ]
+    freq_vcf            // channel: [optional]  [ vcf_file ]
     downsample_coverage // channel: [optional]  coverage to downsample ground truth to
 
     main:
@@ -59,9 +60,15 @@ workflow PREPROCESSING {
     BCFTOOLS_INDEX_GROUND_TRUTH ( ground_truth )
 
     ground_truth
-    .join( BCFTOOLS_INDEX_GROUND_TRUTH.out.csi )
-    .collect ()
+    .join( BCFTOOLS_INDEX_GROUND_TRUTH.out.csi, failOnMismatch: true, failOnDuplicate: true )
     .set { ground_truth }
+
+    freq_vcf.map { [["id": "freq_vcf"], it] }.set { freq_vcf }
+    BCFTOOLS_INDEX_FREQ_VCF ( freq_vcf )
+
+    freq_vcf
+    .join( BCFTOOLS_INDEX_FREQ_VCF.out.csi, failOnMismatch: true, failOnDuplicate: true )
+    .set { freq_vcf }
 
     // Gather versions of all tools used
     versions.mix ( SAMTOOLS_FAIDX.out.versions              ) .set { versions }
@@ -72,6 +79,7 @@ workflow PREPROCESSING {
     reference         // channel: [ meta, fasta, fasta_fai ]
     chr_list          // channel: list of chromosomes to consider
     ground_truth      // channel: [ meta, vcf, vcf_index ]
+    freq_vcf          // channel: [ meta, vcf, vcf_index ]
 
     versions          // channel: [ versions.yml ]
 }

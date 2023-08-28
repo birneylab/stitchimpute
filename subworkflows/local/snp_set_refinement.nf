@@ -8,11 +8,12 @@ include { STITCH_TWO_STEP_IMPUTE                  } from '../../subworkflows/loc
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_STITCH } from '../../modules/nf-core/bcftools/index'
 include { BCFTOOLS_INDEX as BCFTOOLS_INDEX_JOINT  } from '../../modules/nf-core/bcftools/index'
 include { BCFTOOLS_CONCAT                         } from '../../modules/nf-core/bcftools/concat'
+include { REFORMAT_R2                             } from '../../modules/local/filterpositions'
 include { FILTER_POSITIONS                        } from '../../modules/local/filterpositions'
 
 // workflow-specific variables
 
-filter_var  = params.ground_truth_vcf ? (params.filter_var ?: "pearson_r"): "info_score" // neds to be global for use in read_filter_values
+filter_var  = params.ground_truth_vcf ? (params.filter_var ?: "r2"): "info_score" // neds to be global for use in read_filter_values
 def random_seed = params.random_seed ?: []
 
 //
@@ -29,13 +30,17 @@ workflow RECURSIVE_ROUTINE {
     filter_value_list // channel: [mandatory] list of filter values
     genotype_vcf      // channel: [mandatory] [ meta, vcf, vcf_index ]
     ground_truth_vcf  // channel: [mandatory] [ meta, vcf, vcf_index ]
+    freq_vcf          // channel: [mandatory] [ meta, vcf, vcf_index ]
     niter             // channel: [mandatory] total number of iterations
-    performance       // channel: [mandatory] [ meta, performance_csv ]
+    performance       // channel: [optional] [ meta, performance_csv ]
+    info_score        // channel: [optional] [ meta, info_score ]
+    rsquare           // channel: [optional] [ meta, r2_sites, r2_samples, r2_groups ]
 
     versions          // channel: [mandatory] [ versions.yml ]
 
     main:
     chr_list.first().map { it.size() }.set { nchr }
+
     nchr
     .combine ( niter.first() )
     .flatMap { nchr, niter -> (1..nchr) * niter }
@@ -126,8 +131,34 @@ workflow RECURSIVE_ROUTINE {
     .join ( BCFTOOLS_INDEX_JOINT.out.csi, failOnMismatch: true, failOnDuplicate: true )
     .set { genotype_vcf }
 
-    POSTPROCESSING( genotype_vcf, ground_truth_vcf.first() )
-    POSTPROCESSING.out.performance.set { performance }
+    POSTPROCESSING(
+        genotype_vcf,
+        ground_truth_vcf.first(),
+        freq_vcf        .first(),
+        chr_list        .first(),
+        counter,
+        nchr
+    )
+
+    POSTPROCESSING.out.info_score.set { info_score }
+    POSTPROCESSING.out.rsquare   .set { rsquare    }
+
+    switch ( filter_var ) {
+        case 'info_score':
+            info_score.set { performance }
+            break
+
+        case 'r2':
+            rsquare
+            .map { meta, r2_sites, r2_samples, r2_groups -> [ meta, r2_sites ] }
+            .set { r2_sites   }
+
+            REFORMAT_R2 ( r2_sites )
+            REFORMAT_R2.out.r2.set { performance }
+
+            versions.mix ( REFORMAT_R2.out.versions ) .set { versions }
+            break
+    }
 
     performance
     .map {
@@ -151,6 +182,7 @@ workflow RECURSIVE_ROUTINE {
     versions.mix ( BCFTOOLS_INDEX_JOINT.out.versions   ) .set { versions }
     versions.mix ( POSTPROCESSING.out.versions         ) .set { versions }
 
+
     emit:
     collected_samples       // channel: [ meta, collected_crams, collected_crais, cramlist ]
     reference               // channel: [ meta, fasta, fasta_fai ]
@@ -159,8 +191,11 @@ workflow RECURSIVE_ROUTINE {
     filter_value_list       // channel: list of filter values
     genotype_vcf            // channel: [ meta, vcf, vcf_index ]
     ground_truth_vcf        // channel: [ meta, vcf, vcf_index ]
+    freq_vcf                // channel: [optional]  [ meta, vcf, vcf_index ]
     niter                   // channel: total number of iterations
     performance             // channel: [ meta, performance_csv ]
+    info_score              // channel: [ meta, info_score ]
+    rsquare                 // channel: [ meta, r2_sites, r2_samples, r2_groups ]
 
     versions                // channel: [ versions.yml ]
 }
@@ -176,13 +211,16 @@ workflow SNP_SET_REFINEMENT {
     stitch_posfile    // channel: [mandatory] [ meta, stitch_posfile ]
     chr_list          // channel: [mandatory] list of chromosomes names
     ground_truth_vcf  // channel: [optional]  [ meta, vcf, vcf_index ]
+    freq_vcf          // channel: [optional]  [ meta, vcf, vcf_index ]
 
     main:
-    versions = Channel.empty().collect()
+    versions = Channel.empty().first()
 
     // will collect the output of each recursion
-    genotype_vcf = Channel.empty().collect()
-    performance  = Channel.empty().collect()
+    genotype_vcf = Channel.empty().first()
+    performance  = Channel.empty().first()
+    info_score   = Channel.empty().first()
+    rsquare      = Channel.empty().first()
 
     stitch_posfile.map {
         meta, stitch_posfile ->
@@ -201,20 +239,27 @@ workflow SNP_SET_REFINEMENT {
         chr_list,
         filter_value_list,
         genotype_vcf,
-        ground_truth_vcf.ifEmpty([]),
+        ground_truth_vcf.ifEmpty([]).first(),
+        freq_vcf.ifEmpty([]).first(),
         niter,
         performance,
+        info_score,
+        rsquare,
         versions,
     ).times ( niter )
 
     RECURSIVE_ROUTINE.out.genotype_vcf.set { genotype_vcf }
     RECURSIVE_ROUTINE.out.performance .set { performance  }
+    RECURSIVE_ROUTINE.out.info_score  .set { info_score   }
+    RECURSIVE_ROUTINE.out.rsquare     .set { rsquare      }
 
     versions.mix( RECURSIVE_ROUTINE.out.versions ).set { versions }
 
     emit:
     genotype_vcf // channel: [ meta, performance_csv ]
     performance  // channel: [ meta, vcf, vcf_index ]
+    info_score   // channel: [ meta, info_score ]
+    rsquare      // channel: [ meta, r2_sites, r2_samples, r2_groups ]
 
     versions     // channel: [ versions.yml ]
 }

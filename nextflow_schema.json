@@ -10,10 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": [
-                "input",
-                "outdir"
-            ],
+            "required": ["input", "outdir"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -30,11 +27,7 @@
                     "default": "imputation",
                     "fa_icon": "fas fa-hand-pointer",
                     "description": "Which branch of the pipeline to run",
-                    "enum": [
-                        "imputation",
-                        "grid_search",
-                        "snp_set_refinement"
-                    ]
+                    "enum": ["imputation", "grid_search", "snp_set_refinement"]
                 },
                 "outdir": {
                     "type": "string",
@@ -107,9 +100,7 @@
                     "description": "Number of generations since founding of the population"
                 }
             },
-            "required": [
-                "stitch_posfile"
-            ],
+            "required": ["stitch_posfile"],
             "fa_icon": "fas fa-dna"
         },
         "reference_genome_options": {
@@ -161,8 +152,15 @@
                 "ground_truth_vcf": {
                     "type": "string",
                     "fa_icon": "fas fa-file",
-		    "description":"VCF file with ground truth calls",
-                    "help_text": "Accepted format are vcf, vcf.gz, and bcf. Sample names must be identical to the sample names in the SM tag of the cram indicated in the samplesheet. Used to calculate per-sample correlation with the imputation results. The file is re-formatted appropriately and given in input to STITCH with the --genfile flag.",
+                    "description": "VCF file with ground truth calls",
+                    "help_text": "Accepted format are vcf, vcf.gz, and bcf. Sample names must be identical to the sample names in the SM tag of the cram indicated in the samplesheet. Used to calculate correlation with the imputation results. Must contain FORMAT/DP and FORMAT/PL tags for all the variants.",
+                    "format": "file-path"
+                },
+                "freq_vcf": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file",
+                    "description": "VCF file used to calculate allele frequencies. If not specified the realised frequencies in the imputation set are used.",
+                    "help_text": "Accepted format are vcf, vcf.gz, and bcf. It is used by GLIMPSE concordance for determining MAF bins. Must contain an INFO/AF field or the field declared with --af-tag in GLIMPSE2_CONCORDANCE",
                     "format": "file-path"
                 },
                 "downsample_coverage": {
@@ -170,43 +168,67 @@
                     "description": "To what average depth should the ground truth cram files be downsampled to?",
                     "help_text": "To what average depth should the ground truth cram files be downsampled to? If not specidied no downsampling is done. Must be a numeric value."
                 },
-                "correlation_imputed_dosage_type": {
-                    "type": "string",
-                    "default": "soft",
-                    "fa_icon": "fas fa-file",
-		    "description": "Type of dosage to use in calculating the correlation",
-                    "help_text": "Should the correlation with the ground truth be calculated on the posterior haplotype dosage (\"soft\"), or on the dosage corresponding to the posterior genotype that has maximal posterior probability (\"hard\")? The hard dosage is an integer [0, 1, 2], the soft dosage is a real number in [0, 2].",
-                    "format": "file-path",
-                    "enum": [
-                        "soft",
-                        "hard"
-                    ],
-                    "hidden": true
-                },
                 "random_seed": {
                     "type": "integer",
                     "description": "Random seed used for downsampling"
+                },
+                "filter_var": {
+                    "type": "string",
+                    "enum": ["info_score", "r2"],
+                    "description": "Perfromance metric used in filtering"
+                },
+                "glimpse2_concordance_bins": {
+                    "type": "string",
+                    "default": "0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.5",
+                    "fa_icon": "far fa-check-circle",
+                    "hidden": true,
+                    "description": "MAF bins for calculating validation performance",
+                    "help_text": "Allele frequency bins used for rsquared computations. By default they should as MAF bins [0-0.5], while they should take the full range [0-1] if \u2013use-ref-alt is used."
+                },
+                "glimpse2_concordance_allele_counts": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "hidden": true,
+                    "help_text": "Default allele count bins used for rsquared computations. AN field must be defined in the frequency file.",
+                    "description": "Use default allele count bins"
+                },
+                "glimpse2_concordance_ac_bins": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "hidden": true,
+                    "help_text": "User-defined allele count bins used for rsquared computations.",
+                    "description": "User-defined allele count bins"
+                },
+                "glimpse2_min_val_gl": {
+                    "type": "integer",
+                    "default": 0,
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Minimum genotype likelihood probability P(G|R) in validation data [set to zero to have no filter of if using \u2013gt-validation]",
+                    "hidden": true
+                },
+                "glimpse2_min_val_dp": {
+                    "type": "integer",
+                    "default": 0,
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Minimum coverage in validation data. If FORMAT/DP is missing and \u2013minDP > 0, the program exits with an error. [set to zero to have no filter of if using \u2013gt-validation]",
+                    "hidden": true
+                },
+                "glimpse2_groups": {
+                    "type": "string",
+                    "hidden": true,
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file",
+                    "description": "Alternative to frequency bins: group bins are user defined, provided in a file."
+                },
+                "glimpse2_samples": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file",
+                    "hidden": true,
+                    "format": "file-path",
+                    "description": "List of samples to process, one sample ID per line."
                 }
             },
             "fa_icon": "fas fa-check"
-        },
-        "other_options": {
-            "title": "Other options",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "filter_var": {
-                    "type": "string",
-                    "hidden": true,
-                    "enum": [
-                        "pearson_r",
-                        "info_score"
-                    ],
-		    "description": "Variable to use for filtering the SNPs",
-                    "help_text": "Can be \"info_score\" or \"pearson_r\". By default, if this is not set \"pearson_r\" is used if ground_truth_vcf is set, \"info_score\" otherwise. If ground_truth_vcf is not defined this is ignored and \"info_score\" is used in any case."
-                }
-            }
         },
         "institutional_config_options": {
             "title": "Institutional config options",
@@ -316,14 +338,7 @@
                     "description": "Method used to save pipeline results to output directory.",
                     "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
                     "fa_icon": "fas fa-copy",
-                    "enum": [
-                        "symlink",
-                        "rellink",
-                        "link",
-                        "copy",
-                        "copyNoFollow",
-                        "move"
-                    ],
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
                 },
                 "email_on_fail": {
@@ -422,9 +437,6 @@
         },
         {
             "$ref": "#/definitions/ground_truth"
-        },
-        {
-            "$ref": "#/definitions/other_options"
         },
         {
             "$ref": "#/definitions/institutional_config_options"

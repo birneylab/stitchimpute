@@ -39,9 +39,21 @@ stitch_posfile = params.stitch_posfile ? Channel.fromPath(params.stitch_posfile)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ground_truth        = params.ground_truth_vcf    ? Channel.fromPath(params.ground_truth_vcf).collect() : Channel.empty()
-skip_chr            = params.skip_chr            ? params.skip_chr.split( "," )                        : []
+ground_truth        = params.ground_truth_vcf    ? Channel.fromPath(params.ground_truth_vcf).first() : Channel.empty()
+freq_vcf            = params.freq_vcf            ? Channel.fromPath(params.freq_vcf).first()         : Channel.empty()
+skip_chr            = params.skip_chr            ? params.skip_chr.split( "," )                      : []
 downsample_coverage = params.downsample_coverage ?: Channel.empty()
+
+def ground_truth_basename = params.ground_truth_vcf ? file ( params.ground_truth_vcf ).simpleName : null
+
+if ( ground_truth_basename == "freq" ) {
+    error( "To avoid name collisions, the ground_truth_vcf file cannot be called 'freq.*'." )
+}
+
+if ( ground_truth_basename == "joint_stitch_output" ) {
+    error( "To avoid name collisions, the ground_truth_vcf file cannot be called 'joint_stitch_output.*'." )
+}
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,11 +167,12 @@ workflow STITCHIMPUTE {
     //
     stitch_posfile.map { [["id": null], it] }.set { stitch_posfile }
 
-    PREPROCESSING ( reads, fasta, skip_chr, ground_truth, downsample_coverage )
+    PREPROCESSING ( reads, fasta, skip_chr, ground_truth, freq_vcf, downsample_coverage )
     PREPROCESSING.out.collected_samples.set { collected_samples }
     PREPROCESSING.out.reference        .set { reference         }
     PREPROCESSING.out.chr_list         .set { chr_list          }
     PREPROCESSING.out.ground_truth     .set { ground_truth      }
+    PREPROCESSING.out.freq_vcf         .set { freq_vcf          }
 
     switch (params.mode) {
         case "imputation":
@@ -171,13 +184,14 @@ workflow STITCHIMPUTE {
             IMPUTATION ( collected_samples, reference, stitch_posfile, chr_list )
             IMPUTATION.out.genotype_vcf.set { genotype_vcf }
 
-            //
-            // SUBWORKFLOW: calculate ground truth correlation and make plots
-            //
+            ////
+            //// SUBWORKFLOW: calculate ground truth correlation and make plots
+            ////
 
-            POSTPROCESSING ( genotype_vcf, ground_truth )
+            POSTPROCESSING ( genotype_vcf, ground_truth, freq_vcf, chr_list, null, null )
 
-            POSTPROCESSING.out.performance.set { performance }
+            POSTPROCESSING.out.rsquare   .set { rsquare    }
+            POSTPROCESSING.out.info_score.set { info_score }
 
             versions.mix ( IMPUTATION.out.versions     ).set { versions }
             versions.mix ( POSTPROCESSING.out.versions ).set { versions }
@@ -197,9 +211,10 @@ workflow STITCHIMPUTE {
             // SUBWORKFLOW: calculate ground truth correlation and make plots
             //
 
-            POSTPROCESSING ( genotype_vcf, ground_truth )
+            POSTPROCESSING ( genotype_vcf, ground_truth, freq_vcf, chr_list, null, null )
 
-            POSTPROCESSING.out.performance.set { performance }
+            POSTPROCESSING.out.rsquare   .set { rsquare    }
+            POSTPROCESSING.out.info_score.set { info_score }
 
             versions.mix ( GRID_SEARCH.out.versions    ).set { versions }
             versions.mix ( POSTPROCESSING.out.versions ).set { versions }
@@ -213,10 +228,17 @@ workflow STITCHIMPUTE {
             //
 
             SNP_SET_REFINEMENT (
-                collected_samples, reference, stitch_posfile, chr_list, ground_truth
+                collected_samples,
+                reference,
+                stitch_posfile,
+                chr_list,
+                ground_truth,
+                freq_vcf
             )
             SNP_SET_REFINEMENT.out.genotype_vcf.set { genotype_vcf }
-            SNP_SET_REFINEMENT.out.performance .set { performance }
+            SNP_SET_REFINEMENT.out.performance .set { performance  }
+            SNP_SET_REFINEMENT.out.info_score  .set { info_score   }
+            SNP_SET_REFINEMENT.out.rsquare     .set { rsquare      }
 
             versions.mix ( SNP_SET_REFINEMENT.out.versions ).set { versions }
 
@@ -224,7 +246,7 @@ workflow STITCHIMPUTE {
 
     }
 
-    PLOTTING ( performance )
+    PLOTTING ( info_score, rsquare )
 
     PLOTTING.out.plots.set { plots }
 

@@ -24,6 +24,7 @@ workflow SPLIT_POSFILE {
     .set{ positions_to_split }
 
     SEPARATEPOSITIONSBYCHR( positions_to_split )
+
     SEPARATEPOSITIONSBYCHR.out.positions
     .join ( positions_to_split, failOnMismatch: true, failOnDuplicate: true )
     .map {
