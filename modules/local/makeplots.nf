@@ -173,12 +173,15 @@ process PLOT_R2_SAMPLES {
     # see github.com/odelaneau/GLIMPSE/pull/180
     df["ds_r2"] = df["ds_r2"] ** 2
 
-    p <- ggplot(df, aes(x = fct_reorder(sample, ds_r2), y = as.numeric(ds_r2))) +
-        labs(y = bquote(Pearson~italic(r^2)), x = "Sample") +
+    p <- ggplot(df, aes(x = as.numeric(ds_r2), y = fct_reorder(sample, ds_r2))) +
+        labs(x = bquote(Pearson~italic(r^2)), y = "Sample") +
         geom_col() +
+        scale_x_continuous(limits = c(0,1)) +
+        scale_y_discrete(
+            labels = as_labeller( function(x){ substr(x, 1, 40) } )
+        ) +
         theme_cowplot(18) +
-        scale_y_continuous(limits = c(0,1))
-        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+        theme(axis.text.x = element_text(size = 12))
 
     ggsave("${prefix}.${suffix}", p)
 
@@ -259,7 +262,7 @@ process PLOT_R2_MAF {
         labs(y = bquote(Pearson~italic(r^2)), x = "Minor Allele Frequency") +
         geom_line() +
         geom_point(size = 3) +
-        scale_y_continuous(limits = c(0,1))
+        scale_y_continuous(limits = c(0,1)) +
         theme_cowplot(18)
 
     ggsave("${prefix}.${suffix}", p)
