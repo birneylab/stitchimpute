@@ -23,7 +23,7 @@ It can also compare the imputation against some ground truth (high-coverage samp
 
 **Disclaimer**: this pipeline uses the nf-core template but it is not part of nf-core itself.
 
-<img src="docs/images/birneylab-stitchimpute_metro_map.png" width=100%>
+<img src="docs/images/birneylab-stitchimpute_metro_map.png" width=10%>
 
 <!--
 **nf-core/stitchimpute** is a bioinformatics pipeline that ...
