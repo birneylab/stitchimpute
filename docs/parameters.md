@@ -44,18 +44,18 @@ Reference genome related files and options required for the workflow.
 
 | Parameter | Description | Type | Default | Required | Hidden |
 |-----------|-----------|-----------|-----------|-----------|-----------|
-| `ground_truth_vcf` | VCF file with ground truth calls <details><summary>Help</summary><small>Accepted format are vcf, vcf.gz, and bcf. Sample names must be identical to the sample names in the SM tag of the cram indicated in the samplesheet. Used to calculate per-sample correlation with the imputation results. The file is re-formatted appropriately and given in input to STITCH with the --genfile flag.</small></details>| `string` |  |  |  |
+| `ground_truth_vcf` | VCF file with ground truth calls <details><summary>Help</summary><small>Accepted format are vcf, vcf.gz, and bcf. Sample names must be identical to the sample names in the SM tag of the cram indicated in the samplesheet. Used to calculate correlation with the imputation results. Must contain FORMAT/DP and FORMAT/PL tags for all the variants.</small></details>| `string` |  |  |  |
+| `freq_vcf` | VCF file used to calculate allele frequencies. If not specified the realised frequencies in the imputation set are used. <details><summary>Help</summary><small>Accepted format are vcf, vcf.gz, and bcf. It is used by GLIMPSE concordance for determining MAF bins. Must contain an INFO/AF field or the field declared with --af-tag in GLIMPSE2_CONCORDANCE</small></details>| `string` |  |  |  |
 | `downsample_coverage` | To what average depth should the ground truth cram files be downsampled to? <details><summary>Help</summary><small>To what average depth should the ground truth cram files be downsampled to? If not specidied no downsampling is done. Must be a numeric value.</small></details>| `number` |  |  |  |
-| `correlation_imputed_dosage_type` | Type of dosage to use in calculating the correlation <details><summary>Help</summary><small>Should the correlation with the ground truth be calculated on the posterior haplotype dosage ("soft"), or on the dosage corresponding to the posterior genotype that has maximal posterior probability ("hard")? The hard dosage is an integer [0, 1, 2], the soft dosage is a real number in [0, 2].</small></details>| `string` | soft |  | True |
 | `random_seed` | Random seed used for downsampling | `integer` |  |  |  |
-
-## Other options
-
-
-
-| Parameter | Description | Type | Default | Required | Hidden |
-|-----------|-----------|-----------|-----------|-----------|-----------|
-| `filter_var` | Variable to use for filtering the SNPs <details><summary>Help</summary><small>Can be "info_score" or "pearson_r". By default, if this is not set "pearson_r" is used if ground_truth_vcf is set, "info_score" otherwise. If ground_truth_vcf is not defined this is ignored and "info_score" is used in any case.</small></details>| `string` |  |  | True |
+| `filter_var` | Perfromance metric used in filtering | `string` |  |  |  |
+| `glimpse2_concordance_bins` | MAF bins for calculating validation performance <details><summary>Help</summary><small>Allele frequency bins used for rsquared computations. By default they should as MAF bins [0-0.5], while they should take the full range [0-1] if –use-ref-alt is used.</small></details>| `string` | 0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.5 |  | True |
+| `glimpse2_concordance_allele_counts` | Use default allele count bins <details><summary>Help</summary><small>Default allele count bins used for rsquared computations. AN field must be defined in the frequency file.</small></details>| `string` |  |  | True |
+| `glimpse2_concordance_ac_bins` | User-defined allele count bins <details><summary>Help</summary><small>User-defined allele count bins used for rsquared computations.</small></details>| `string` |  |  | True |
+| `glimpse2_min_val_gl` | Minimum genotype likelihood probability P(G|R) in validation data [set to zero to have no filter of if using –gt-validation] | `integer` | 0 |  | True |
+| `glimpse2_min_val_dp` | Minimum coverage in validation data. If FORMAT/DP is missing and –minDP > 0, the program exits with an error. [set to zero to have no filter of if using –gt-validation] | `integer` | 0 |  | True |
+| `glimpse2_groups` | Alternative to frequency bins: group bins are user defined, provided in a file. | `string` |  |  | True |
+| `glimpse2_samples` | List of samples to process, one sample ID per line. | `string` |  |  | True |
 
 ## Institutional config options
 
