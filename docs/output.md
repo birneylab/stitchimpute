@@ -19,25 +19,11 @@ In the SNP set refinement workflow, it will be a string "iteration\_{n}" with th
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
-- [Ground truth](#groundtruth) - Conversion of the ground truth to the anndata format and downsampling of high-coverage cram files
 - [Stitch](#stitch) - Raw output from the STITCH imputation per chromosome
 - [Joint output](#joint) - Full-genome imputation output
-- [Performance](#performance) - Imputation performance per SNP according to different metrics
+- [Imputation metrics](#performance) - Imputation metrics per SNP, MAF bins, and/or samples
+- [Plots](#plots) - Plots obtained from the imputation metrics
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
-
-### Ground truth
-
-Conversion of the ground truth to the anndata format and downsampling of high-coverage cram files
-
-<details markdown="1">
-<summary>Output files</summary>
-
-- `ground_truth/`
-  - `anndata/*.anndata.zarr`: Information from `ground_truth_vcf` in anndata zarr format for easier manipulation
-  - `downsampled_reads/*.cram`: Downsampled version of the cram files used in the pipeline
-  - `downsampled_reads/*.cram.crai`: Index files for the downsampled cram files
-
-</details>
 
 ### Stitch
 
@@ -65,27 +51,32 @@ Full-genome imputation output
 - `{group}/joint_stitch_output`
   - `vcf/joint_stitch_output.vcf.gz`: Full genome imputed genotypes
   - `vcf/joint_stitch_output.vcf.gz.csi`: VCF index
-  - `anndata/joint_stitch_output.anndata.zarr`: Full genome imputed genotypes in anndata format
 
 </details>
 
-### Performance
+### Imputation metrics
 
-Imputation performance per SNP according to different metrics. The summary file has the following columns:
-
-```
-chr,pos,ref,alt,info_score,pearson_r
-```
-
-The `pearson_r` column is present only if `ground_truth_vcf` is set.
+Imputation metrics per SNP, minor allele frequency (MAF) bins, and/or samples. If a ground truth is provided this contains also the output of `glimpse2/concordance`.
 
 <details markdown="1">
 <summary>Output files</summary>
 
-- `{group}/performance_summaries`
-  - `joint_stitch_output.performance.csv.gz`: CSV file containing the imputation performance results
-- `imputation_quality_plots`
-  - `*.pdf`: Plots produced in R with ggplot2 and cowplot showing the cumulative density of the different performance metrics, group by iteration/parameter combination in the respective workflows
+- `{group}/imputation_metrics`
+  - `joint_stitch_output.info_score.csv.gz`: CSV file with header and columns `chr,pos,ref,alt,info_score`. The `info_score` is extracted from the STITCH output and it is a SNP-wise internal imputation quality metric
+  - `joint_stitch_output.r2_sites.tsv.gz`: TSV file produced by `glimpse2/concordance` with per-SNP ground truth correlations in terms of allele dosages (`ds_r2`)
+  - `joint_stitch_output.{rsquare,error}.{grp,spl}.txt.gz`: ground truth performance metrics produced by `glimpse2/concordance`
+
+</details>
+
+### Plots
+
+Plots produced from the files in the `imputation_metrics` folder
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `{group}/plots`
+  - `joint_stitch_output.{info_score,r2_sites,r2_samples,r2_maf_bins}.pdf`
 
 </details>
 
