@@ -23,7 +23,7 @@ Define where the pipeline should find input data and save output data.
 
 | Parameter | Description | Type | Default | Required | Hidden |
 |-----------|-----------|-----------|-----------|-----------|-----------|
-| `stitch_posfile` | Positions to run the imputation over <details><summary>Help</summary><small>Where to find file with positions to run. File is tab seperated with no header, one row per SNP, with col 1 = chromosome, col 2 = physical position (sorted from smallest to largest), col 3 = reference base, col 4 = alternate base. Bases are capitalized. Example first row: 1    1000    A    G</small></details>| `string` |  | True |  |
+| `stitch_posfile` | Positions to run the imputation over <details><summary>Help</summary><small>Where to find file with positions to run. File is tab seperated with no header, one row per SNP, with col 1 = chromosome, col 2 = physical position (sorted from smallest to largest), col 3 = reference base, col 4 = alternate base. Bases are capitalized. Example first row: 1	1000	A	G</small></details>| `string` |  | True |  |
 | `stitch_K` | Number of ancestral haplotypes <details><summary>Help</summary><small>See STITCH documentation for more details. Required for imputation mode.</small></details>| `integer` |  |  |  |
 | `stitch_nGen` | Number of generations since founding of the population <details><summary>Help</summary><small>See STITCH documentation for more details. Required for imputation mode.</small></details>| `integer` |  |  |  |
 
