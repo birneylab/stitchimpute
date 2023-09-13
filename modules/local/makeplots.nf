@@ -53,8 +53,7 @@ process PLOT_INFO_SCORE {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def args   = task.ext.args   ?: ""
+    def args = task.ext.args   ?: ""
     prefix   = task.ext.prefix ?: "${meta.id}"
     suffix   = task.ext.suffix ?: "pdf"
     """
@@ -124,8 +123,7 @@ process PLOT_R2_SITES {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def args   = task.ext.args   ?: ""
+    def args = task.ext.args   ?: ""
     prefix   = task.ext.prefix ?: "${meta.id}"
     suffix   = task.ext.suffix ?: "pdf"
     """
@@ -203,8 +201,7 @@ process PLOT_R2_SAMPLES {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def args   = task.ext.args   ?: ""
+    def args = task.ext.args   ?: ""
     prefix   = task.ext.prefix ?: "${meta.id}"
     suffix   = task.ext.suffix ?: "pdf"
     """
@@ -285,8 +282,7 @@ process PLOT_R2_MAF {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def args   = task.ext.args   ?: ""
+    def args = task.ext.args   ?: ""
     prefix   = task.ext.prefix ?: "${meta.id}"
     suffix   = task.ext.suffix ?: "pdf"
     """
