@@ -1,16 +1,6 @@
 # birneylab/stitchimpute: Usage
 
-<!--
-# nf-core/stitchimpute: Usage
-
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/stitchimpute/usage](https://nf-co.re/stitchimpute/usage)
-
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
--->
-
 ## Introduction
-
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
 ## Samplesheet input
 
@@ -152,10 +142,6 @@ outdir: './results/'
 genome: 'GRCh37'
 <...>
 ```
-
-<!--
-You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
--->
 
 ### Updating the pipeline
 
