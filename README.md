@@ -18,10 +18,7 @@ It can compare the imputation results against some ground truth (i.e. high-cover
 1. Downsample high-coverage cram files ([`samtools`](http://www.htslib.org/doc/samtools.html); _optional_)
 2. Run joint imputation with STITCH on high and low coverage cram files ([`STITCH`](https://doi.org/10.1038/ng.3594))
 3. Compare imputation results to ground truth variants ([`glimpse2 concordance`](https://odelaneau.github.io/GLIMPSE/docs/documentation/concordance/); _optional_)
-4. Plot the cumulative density of several per-SNP performance metrics ([`ggplot2`](https://ggplot2.tidyverse.org/)):
-   - Info score
-   - Pearson $r$
-   - Pearson $r^2$
+4. Plot imputation performance stats ([`ggplot2`](https://ggplot2.tidyverse.org/))
 
 ## Usage
 
