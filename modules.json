@@ -12,7 +12,7 @@
                     },
                     "bcftools/index": {
                         "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+                        "git_sha": "36cfa4c2a7e538832c50f40cb16d159e84cd3305",
                         "installed_by": ["modules"]
                     },
                     "bcftools/query": {

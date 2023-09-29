@@ -38,15 +38,14 @@ process BCFTOOLS_INDEX {
     stub:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
+    def extension = args.contains("--tsi") || args.contains("-t") ? "tbi" :
+                    "csi"
     """
-    touch ${vcf}.csi
-    touch ${vcf}.tbi
+    touch ${vcf}.${extension}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
     END_VERSIONS
     """
-
 }
