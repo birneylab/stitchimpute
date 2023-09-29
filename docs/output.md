@@ -1,9 +1,5 @@
 # birneylab/stitchimpute: Output
 
-<!--
-# nf-core/stitchimpute: Output
--->
-
 ## Introduction
 
 This document describes the output produced by the pipeline.
@@ -12,7 +8,7 @@ The directories listed below will be created in the results directory after the 
 
 According to the pipeline workflow selected, the output folder with have different subfolders, which I indicate as `{group}` in the following explanation.
 `{group}` will be nothing in the imputation workflow.
-In the grid search workflow, it will be a string "K*{K}\_nGen*{nGen}" with the corresponding value of K and nGen for a given combination of parameters.
+In the grid search workflow, it will be a string `K{K value}_nGen{nGen value}` with the corresponding value of K and nGen for a given combination of parameters.
 In the SNP set refinement workflow, it will be a string "iteration\_{n}" with the corresponding iteration number.
 
 ## Pipeline overview
