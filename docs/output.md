@@ -89,12 +89,3 @@ Plots produced from the files in the `imputation_metrics` folder
 </details>
 
 [Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
-
-## Note on anndata, scikit-allel, and zarr
-
-[Zarr](https://zarr.dev/) is a format for the storage of large multidimensional arrays.
-Combined with [Dask](https://www.dask.org/), zarr allows to operate on larger-than-memory matrices.
-[Anndata](https://anndata.readthedocs.io/en/latest/) is a Python package that provides an annotated data matrix. It can use zarr as a storage format and Dask for certain computations.
-Internally the pipeline uses [scikit-allel](https://scikit-allel.readthedocs.io/en/stable/) to convert VCF files to the zarr format, and then with a custom script it converts the scikit-allel output to an anndata object that is serialised to the zarr format. This enormously simplifies data manipulations and minimises the chance for errors.
-
-Since the zarr anndata objects are produced by the pipeline in any case, I also save them as outputs for further exploration and for interfacing with other pipelines (e.g. GWAS pipeline).
