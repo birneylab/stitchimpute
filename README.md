@@ -53,7 +53,7 @@ nextflow run birneylab/stitchimpute \
 > provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-> For more details and further functionality, please refer to the [usage documentation](docs/usage.md) and the [parameter documentation](docs/parameters.md).
+> For more details and further functionality, please refer to the [usage documentation](./docs/usage.md) and the [parameter documentation](./docs/parameters.md).
 
 <!--
 > TODO: add docs
@@ -94,7 +94,7 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](./CITATIONS.md) file.
 
 You can cite the `nf-core` publication as follows:
 
