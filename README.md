@@ -67,7 +67,7 @@ To see the results of an example test run with a full size dataset refer to the 
 -->
 
 For more details about the output files and reports, please refer to the
-[output documentation](docs/output.md).
+[output documentation](./docs/output.md).
 
 ## Credits
 
