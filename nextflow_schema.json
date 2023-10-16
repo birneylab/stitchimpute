@@ -26,7 +26,7 @@
                     "type": "string",
                     "default": "imputation",
                     "fa_icon": "fas fa-hand-pointer",
-                    "description": "Which branch of the pipeline to run",
+                    "description": "Which branch of the pipeline to run. Can be `imputation`, `grid_search`, or `snp_set_refinement`",
                     "enum": ["imputation", "grid_search", "snp_set_refinement"]
                 },
                 "outdir": {
@@ -55,7 +55,7 @@
                     "description": "CSV file containing the threshold for inclusion of SNPs in the iterative refinement process",
                     "format": "file-path",
                     "mimetype": "text/csv",
-                    "help_text": "TBD"
+                    "help_text": "By default the `info_score` value of the SNP is used for filtering if a ground truth is not provided, and the Pearson r^2 if a ground truth is provided. This can be changed with the `filter_var` parameter."
                 },
                 "email": {
                     "type": "string",
@@ -178,7 +178,7 @@
                     "fa_icon": "far fa-check-circle",
                     "hidden": true,
                     "description": "MAF bins for calculating validation performance",
-                    "help_text": "Allele frequency bins used for rsquared computations. By default they should as MAF bins [0-0.5], while they should take the full range [0-1] if \u2013use-ref-alt is used."
+                    "help_text": "Allele frequency bins used for r^2 computations. By default they should as MAF bins [0-0.5], while they should take the full range [0-1] if \u2013use-ref-alt is used."
                 },
                 "glimpse2_concordance_allele_counts": {
                     "type": "string",
