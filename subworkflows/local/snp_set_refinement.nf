@@ -47,13 +47,10 @@ workflow RECURSIVE_ROUTINE {
     .set { counter }
 
     stitch_posfile
-    .combine( filter_value_list.first() )
     .map {
-        meta, posfile, filter_value_list ->
+        meta, posfile ->
         def new_meta = meta.clone()
-        new_meta.curr_filter_value = filter_value_list[meta.iteration]
-        new_meta.iteration         = meta.iteration + 1
-        curr_iteration             = new_meta.iteration
+        new_meta.iteration = meta.iteration + 1
         [new_meta, posfile]
     }
     .set { stitch_posfile }
@@ -71,7 +68,6 @@ workflow RECURSIVE_ROUTINE {
             [
                 "id"                   : "chromosome_${chromosome_name}",
                 "publish_dir_subfolder": "iteration_${meta.iteration}"  ,
-                "curr_filter_value"    : meta.curr_filter_value         ,
                 "iteration"            : meta.iteration                 ,
             ],
             positions, chromosome_name
@@ -161,11 +157,12 @@ workflow RECURSIVE_ROUTINE {
     }
 
     performance
+    .combine( filter_value_list.first() )
     .map {
-        meta, performance_csv ->
+        meta, performance_csv, filter_value_list ->
         def new_meta = meta.clone()
         new_meta.id = "stitch_posfile"
-        [new_meta, performance_csv, meta.curr_filter_value]
+        [new_meta, performance_csv, filter_value_list[meta.iteration - 1]]
     }
     .set { performance }
     FILTER_POSITIONS ( performance, filter_var )
