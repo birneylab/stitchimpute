@@ -14,17 +14,26 @@
 
   > Davies, R., Flint, J., Myers, S. et al. Rapid genotype imputation from sequence without reference panels. Nat Genet 48, 965–969 (2016). https://doi.org/10.1038/ng.3594
 
-- [Scikit-allel](https://scikit-allel.readthedocs.io/en/stable/)
-
-- [Anndata](https://anndata.readthedocs.io/en/latest/)
-
-- [Zarr](https://zarr.dev/)
-
-- [Dask](https://www.dask.org/)
-
 - [Samtools and Bcftools](http://www.htslib.org/)
 
   > Danecek P, Bonfield JK, Liddle J, Marshall J, Ohan V, Pollard MO, Whitwham A, Keane T, McCarthy SA, Davies RM, Li H, Twelve years of SAMtools and BCFtools, GigaScience (2021) 10(2) giab008 [33590861]
+
+- [GLIMPSE2](https://odelaneau.github.io/GLIMPSE/)
+
+  > Rubinacci, S., Ribeiro, D. M., Hofmeister, R. J., & Delaneau, O. (2021). Efficient phasing and imputation of low-coverage sequencing data using large reference panels. Nat. Genet., 53, 120–126. doi: 10.1038/s41588-020-00756-0
+
+- [data.table](https://rdatatable.gitlab.io/data.table/)
+
+  > Dowle M, Srinivasan A (2023). data.table: Extension of 'data.frame'. https://r-datatable.com, https://Rdatatable.gitlab.io/data.table, https://github.com/Rdatatable/data.table
+
+- [tidyverse](https://www.tidyverse.org/)
+
+  > H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016
+  > Wickham H, François R, Henry L, Müller K, Vaughan D (2023). dplyr: A Grammar of Data Manipulation. https://dplyr.tidyverse.org, https://github.com/tidyverse/dplyr.
+
+- [R](https://www.r-project.org/)
+
+ > R Core Team (2023). _R: A Language and Environment for Statistical Computing_. R Foundation for Statistical Computing, Vienna, Austria. <https://www.R-project.org/>.
 
 ## Software packaging/containerisation tools
 
