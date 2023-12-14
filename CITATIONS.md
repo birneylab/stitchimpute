@@ -1,5 +1,9 @@
 # birneylab/stitchimpute: Citations
 
+## birneylab/[stitchimpute](https://doi.org/10.1101/2023.12.12.571258)
+
+> Saul Pierotti, Bettina Welz, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney. Genotype imputation in F2 crosses of inbred lines. bioR$\chi$iv 2023 Dec 12. doi: 10.1101/2023.12.12.571258
+
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 
 > Ewels PA, Peltzer A, Fillinger S, Patel H, Alneberg J, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. The nf-core framework for community-curated bioinformatics pipelines. Nat Biotechnol. 2020 Mar;38(3):276-278. doi: 10.1038/s41587-020-0439-x. PubMed PMID: 32055031.

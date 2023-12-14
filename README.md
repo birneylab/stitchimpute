@@ -89,12 +89,15 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  nf-core/stitchimpute for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
-
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](./CITATIONS.md) file.
+
+The main citation for `birneylab/stitchimpute` is:
+
+> **Genotype imputation in F2 crosses of inbred lines**
+>
+> Saul Pierotti, Bettina Welz, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney
+>
+> _bioR$\chi$iv._ 2023 Dec 12. doi: [10.1101/2023.12.12.571258](https://doi.org/10.1101/2023.12.12.571258)
 
 You can cite the `nf-core` publication as follows:
 
