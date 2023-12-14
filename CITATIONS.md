@@ -2,7 +2,7 @@
 
 ## birneylab/[stitchimpute](https://doi.org/10.1101/2023.12.12.571258)
 
-> Saul Pierotti, Bettina Welz, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney. Genotype imputation in F2 crosses of inbred lines. bioR$\chi$iv 2023 Dec 12. doi: 10.1101/2023.12.12.571258
+> Saul Pierotti, Bettina Welz, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney. Genotype imputation in F2 crosses of inbred lines. bioRxiv 2023 Dec 12. doi: 10.1101/2023.12.12.571258
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 
