@@ -33,8 +33,8 @@ First, prepare a samplesheet with your input data that looks as follows:
 
 ```csv
 sample,cram,crai
-/path/to/sample1.cram,/path/to/sample1.cram.crai
-/path/to/sample2.cram,/path/to/sample2.cram.crai
+sample1,/path/to/sample1.cram,/path/to/sample1.cram.crai
+sample2,/path/to/sample2.cram,/path/to/sample2.cram.crai
 ```
 
 Each row represents a sample with its associated cram file and crai file.
