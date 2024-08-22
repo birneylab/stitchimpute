@@ -95,9 +95,9 @@ The main citation for `birneylab/stitchimpute` is:
 
 > **Genotype imputation in F2 crosses of inbred lines**
 >
-> Saul Pierotti, Bettina Welz, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney
+> Saul Pierotti, Bettina Welz, Mireia Osuna-López, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney
 >
-> _bioRxiv._ 2023 Dec 12. doi: [10.1101/2023.12.12.571258](https://doi.org/10.1101/2023.12.12.571258)
+> _Bioinformatics Advances, Volume 4, Issue 1, 2024._ doi: [10.1093/bioadv/vbae107](https://doi.org/10.1093/bioadv/vbae107)
 
 You can cite the `nf-core` publication as follows:
 
