@@ -97,7 +97,7 @@ The main citation for `birneylab/stitchimpute` is:
 >
 > Saul Pierotti, Bettina Welz, Mireia Osuna-López, Tomas Fitzgerald, Joachim Wittbrodt, Ewan Birney
 >
-> _Bioinformatics Advances, Volume 4, Issue 1, 2024._ doi: [10.1093/bioadv/vbae107](https://doi.org/10.1093/bioadv/vbae107)
+> _Bioinformatics Advances_, Volume 4, Issue 1, 2024, doi: [10.1093/bioadv/vbae107](https://doi.org/10.1093/bioadv/vbae107)
 
 You can cite the `nf-core` publication as follows:
 
